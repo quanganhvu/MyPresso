@@ -368,6 +368,7 @@ button{font-family:inherit;color:inherit}
     <input id="titleInput" class="title-input" aria-label="Presentation name" maxlength="60" autocomplete="off">
     <div class="top-actions">
       <button class="btn" id="btnHome">🏠 Home</button>
+      <button class="btn" id="btnSend">📤 Send</button>
       <button class="btn" id="btnNew">✨ New</button>
       <button class="btn warm" id="btnLevel" title="Pick a level"><span id="levelIcon">🐣</span> <span id="levelName">Year 1</span></button>
       <button class="btn" id="btnTheme">🎨 <span id="themeName">Theme</span></button>
@@ -442,7 +443,7 @@ button{font-family:inherit;color:inherit}
   </div>
 
   <section class="shelf">
-    <div class="shelf-head"><h2>My shows</h2><button class="btn sm" id="homeTidy">🧹 Tidy up</button></div>
+    <div class="shelf-head"><h2>My shows</h2><div class="row"><button class="btn sm" id="homeOpenFile">📂 Open a show file</button><button class="btn sm" id="homeTidy">🧹 Tidy up</button></div></div>
     <div class="show-grid" id="homeGrid"></div>
     <p class="hint" id="homeEmpty" hidden>Your shows will live here. Press “Make a new show” to start!</p>
   </section>
@@ -1690,7 +1691,7 @@ function renderHome(){
     const acts = document.createElement('div'); acts.className = 'show-acts';
     acts.innerHTML = homeTidy
       ? `<button class="btn sm danger" data-del="${p.id}">🗑 Delete</button>`
-      : `<button class="btn sm" data-open="${p.id}">✏️ Open</button><button class="btn sm go" data-play="${p.id}">▶ Show</button>`;
+      : `<button class="btn sm" data-open="${p.id}">✏️ Open</button><button class="btn sm go" data-play="${p.id}">▶ Show</button><button class="btn sm icon" data-send="${p.id}" title="Send this show" aria-label="Send ${esc(p.title)}">📤</button>`;
     card.append(open, t, acts); grid.appendChild(card);
   });
 }
@@ -1701,6 +1702,8 @@ homeEl.addEventListener('click', e => {
   if (b.id === 'homeSay'){ const g = homeGreeting(); say(`${g.hi} ${g.ask}`); return; }
   if (b.id === 'homeSound'){ setSound(!soundOn); b.textContent = soundOn ? '🔊' : '🔇'; return; }
   if (b.id === 'homeLevel') return openLevelPicker('home');
+  if (b.id === 'homeOpenFile') return showFileInput.click();
+  if (d.send) return openSendModal(loadProject(d.send));
   if (b.id === 'homeTidy'){ homeTidy = !homeTidy; renderHome(); return; }
   if (d.open || d.play){
     const p = loadProject(d.open || d.play); if (!p) return;
@@ -1722,6 +1725,91 @@ homeEl.addEventListener('click', e => {
 $('#btnHome').onclick = showHome;
 $('#logoHome').onclick = showHome;
 [$('#logoHome'), $('#homeContinue')].forEach(n => n.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); n.click(); } }));
+
+/* ---------- send + open show files ---------- */
+const SHOW_EXT = '.mypresso';
+const showFile = p => {
+  const data = JSON.stringify({app:'MyPresso', version:1, savedAt:new Date().toISOString(), show:p});
+  const name = (p.title || 'My show').replace(/[\\/:*?"<>|]+/g, '').trim().slice(0, 50) || 'My show';
+  return new File([data], name + SHOW_EXT, {type:'application/json'});
+};
+const prettySize = bytes => bytes < 1024 * 1024 ? Math.max(1, Math.round(bytes / 1024)) + ' KB' : (bytes / 1024 / 1024).toFixed(1) + ' MB';
+function canShareFiles(file){ try { return !!(navigator.canShare && navigator.canShare({files:[file]})); } catch(_){ return false; } }
+function openSendModal(p){
+  if (!p) return;
+  if (project && p.id === project.id){ stopEditing(); saveNow(); p = project; }
+  const file = showFile(p);
+  openModal(`<h2>📤 Send my show</h2>
+    <p class="sub">Save “${esc(p.title)}” as a file, then send it by email, WhatsApp or AirDrop. Whoever gets it opens MyPresso and taps <b>📂 Open a show file</b> on the home page.</p>
+    <div class="wz-go"><button class="btn go big" id="sendSave">💾 Save the file</button>${canShareFiles(file) ? '<button class="btn big" id="sendShare">📤 Share…</button>' : ''}</div>
+    <p class="sub" style="margin-top:14px">File size: ${prettySize(file.size)}. Photos make it bigger.</p>`);
+  $('#sendSave').onclick = () => {
+    const url = URL.createObjectURL(file), a = document.createElement('a');
+    a.href = url; a.download = file.name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    closeModal(); sfx('ding'); toast(`Saved “${file.name}”. Look in your Downloads folder.`);
+  };
+  const sh = $('#sendShare');
+  if (sh) sh.onclick = async () => {
+    try { await navigator.share({files:[file], title:p.title, text:`A MyPresso show: ${p.title}`}); closeModal(); sfx('ding'); }
+    catch(e){ if (e && e.name !== 'AbortError') toast('Sharing did not work here. Try “Save the file” instead.'); }
+  };
+}
+
+/* Show files can come from anyone, so rebuild them from known-safe values only */
+function cleanShow(raw){
+  const src = raw && raw.app === 'MyPresso' ? raw.show : null;
+  if (!src || !Array.isArray(src.slides) || !src.slides.length) throw new Error('not a show');
+  const num = (v, d = 0) => Number.isFinite(+v) ? +v : d;
+  const str = (v, max = 2000) => typeof v === 'string' ? v.slice(0, max) : '';
+  const pick = (v, list, d) => list.includes(v) ? v : d;
+  const col = (v, d = null) => typeof v === 'string' && /^#[0-9a-f]{3,8}$/i.test(v) ? v : d;
+  const img = (v, re = /^data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/=]+$/) => typeof v === 'string' && re.test(v) ? v : '';
+  const el = e => {
+    if (!e || typeof e !== 'object') return null;
+    const w = clamp(num(e.w, 200), 10, 3200);
+    const base = {id:uid(), x:clamp(num(e.x), -3200, 3200), y:clamp(num(e.y), -3200, 3200), w, h:clamp(num(e.h, w), 10, 3200), rot:clamp(num(e.rot), -360, 360), anim:pick(e.anim, DANCES.map(d => d[0]), 'none')};
+    switch (e.type){
+      case 'text': return {...base, type:'text', role:pick(e.role, ['title', 'body'], 'body'), size:clamp(num(e.size, 60), 8, 500), text:str(e.text),
+        align:pick(e.align, ['left', 'center', 'right'], 'center'), bold:!!e.bold, style:pick(e.style, ['none', 'card', 'outline'], 'none'),
+        font:pick(e.font, FONTS, null), color:col(e.color), ph:str(e.ph, 300)};
+      case 'sticker': return {...base, type:'sticker', h:w, emoji:str(e.emoji, 16) || '⭐'};
+      case 'image': return {...base, type:'image', src:img(e.src), frame:pick(e.frame, ['none', 'frame', 'circle'], 'frame')};
+      case 'shape': return {...base, type:'shape', shape:pick(e.shape, SHAPES, 'star'), color:col(e.color, '#facc15')};
+      case 'quiz': {
+        const o = (Array.isArray(e.options) ? e.options : []).slice(0, 4).map(x => str(x, 120));
+        while (o.length < 2) o.push('');
+        return {...base, type:'quiz', size:clamp(num(e.size, 58), 8, 300), question:str(e.question, 300), options:o, correct:clamp(Math.round(num(e.correct)), 0, o.length - 1)};
+      }
+      default: return null;
+    }
+  };
+  return {
+    id:uid(), title:str(src.title, 60) || 'My Presentation', theme:pick(src.theme, Object.keys(THEMES), 'space'),
+    topic:str(src.topic, 40), level:LEVELS[src.level] ? src.level : 'y1', stage:str(src.stage, 12),
+    slides:src.slides.slice(0, 200).map(s => ({
+      id:uid(), bg:pick(s && s.bg, BGS, null), deco:!(s && s.deco === false),
+      transition:pick(s && s.transition, TRANSITIONS.map(t => t[0]), 'pop'),
+      drawing:img(s && s.drawing, /^data:image\/png;base64,[A-Za-z0-9+/=]+$/) || null,
+      notes:str(s && s.notes), els:(s && Array.isArray(s.els) ? s.els : []).map(el).filter(Boolean),
+    })),
+  };
+}
+const showFileInput = document.createElement('input');
+showFileInput.type = 'file'; showFileInput.hidden = true; document.body.appendChild(showFileInput);
+showFileInput.addEventListener('change', () => { const f = showFileInput.files[0]; showFileInput.value = ''; if (f) openShowFile(f); });
+function openShowFile(file){
+  if (file.size > 30 * 1024 * 1024){ toast('That file is too big to be a MyPresso show.'); return; }
+  file.text().then(txt => {
+    let p;
+    try { p = cleanShow(JSON.parse(txt)); } catch(_){ toast('That file is not a MyPresso show. Look for a file ending in .mypresso'); return; }
+    closeModal(); openProject(p); sfx('cheer');
+    toast(`Opened “${p.title}”. It is in My shows now.`);
+  }).catch(() => toast('Could not open that file. Try again.'));
+}
+$('#btnSend').onclick = () => openSendModal(project);
+homeEl.addEventListener('dragover', e => { if ([...(e.dataTransfer?.types || [])].includes('Files')) e.preventDefault(); });
+homeEl.addEventListener('drop', e => { const f = e.dataTransfer?.files?.[0]; if (!f) return; e.preventDefault(); openShowFile(f); });
 
 /* ---------- keyboard ---------- */
 document.addEventListener('keydown', e => {
