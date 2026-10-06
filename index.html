@@ -1,0 +1,1881 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MyPresso</title>
+<meta name="description" content="A playful presentation maker for kids. Pick a topic, add stickers, pictures and drawings, then press Show time!">
+<meta property="og:title" content="MyPresso">
+<meta property="og:description" content="A playful presentation maker for kids. Pick a topic, add stickers, pictures and drawings, then press Show time!">
+<meta name="theme-color" content="#6D4AFF">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='16' fill='%23FF4FA3' stroke='%232A2152' stroke-width='5'/%3E%3Cpath d='M26 20 L46 32 L26 44Z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@500;700;800&family=Baloo+2:wght@500;700;800&family=Chewy&family=Patrick+Hand&family=Bubblegum+Sans&family=Luckiest+Guy&family=Comic+Neue:wght@400;700&display=swap">
+<style>
+/* Sticker-book studio: chunky outlined panels with hard shadows around one big central stage */
+:root{
+  --bg:#E9ECFF; --dots:#D2D7FA; --panel:#FFFFFF; --ink:#2A2152; --ink-soft:#615A8E; --line:#2A2152;
+  --grape:#6D4AFF; --tangerine:#FF8A4C; --mint:#22C49A; --sun:#FFC83D; --pink:#FF4FA3; --sky:#CFE8FF;
+  --danger:#E5484D; --stage:#120D33;
+  --ui:'Fredoka','Nunito',system-ui,sans-serif; --body:'Nunito',system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;color:var(--ink);font-family:var(--ui);background:var(--bg) radial-gradient(var(--dots) 1.5px,transparent 1.7px) 0 0/22px 22px;-webkit-tap-highlight-color:transparent}
+button{font-family:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--grape);outline-offset:2px}
+
+.app{display:grid;grid-template-rows:auto minmax(0,1fr);height:100%}
+.panel{background:var(--panel);border:2.5px solid var(--line);border-radius:20px;box-shadow:4px 4px 0 var(--line)}
+
+/* top bar */
+.topbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:12px 16px}
+.logo{display:flex;align-items:center;gap:8px;font:700 26px/1 var(--ui);letter-spacing:-.5px;user-select:none}
+.logo-mark{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:var(--pink);color:#fff;font-size:17px;border:2.5px solid var(--line);box-shadow:2px 2px 0 var(--line);transform:rotate(-6deg)}
+.logo-word b:nth-child(1){color:var(--grape)} .logo-word b:nth-child(2){color:var(--tangerine)} .logo-word b:nth-child(3){color:var(--mint)}
+.title-input{flex:1 1 180px;min-width:0;font:600 18px var(--ui);color:var(--ink);padding:9px 14px;border:2.5px dashed transparent;border-radius:14px;background:transparent}
+.title-input:hover{border-color:#B9B3E0}
+.title-input:focus{outline:none;border-color:var(--grape);background:#fff}
+.top-actions{display:flex;flex-wrap:wrap;gap:8px}
+
+.btn{font:600 15px/1 var(--ui);padding:10px 14px;border-radius:14px;border:2.5px solid var(--line);background:#fff;color:var(--ink);box-shadow:0 3px 0 var(--line);cursor:pointer;transition:transform .08s,box-shadow .08s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{background:#F6F4FF}
+.btn:active{transform:translateY(3px);box-shadow:0 0 0 var(--line)}
+.btn.icon{padding:10px 11px;min-width:42px;justify-content:center}
+.btn.go{background:var(--grape);color:#fff}
+.btn.go:hover{background:#5B38F0}
+.btn.warm{background:var(--sun)}
+.btn.warm:hover{background:#FFBA14}
+.btn.sm{font-size:13px;padding:7px 10px;border-radius:11px;box-shadow:0 2px 0 var(--line)}
+.btn.danger{color:var(--danger)}
+.btn.big{font-size:18px;padding:14px 18px}
+.btn:disabled{opacity:.4;cursor:default;transform:none;box-shadow:0 3px 0 var(--line)}
+
+/* main layout */
+.main{display:grid;grid-template-columns:200px minmax(0,1fr) 280px;gap:16px;padding:0 16px 16px;min-height:0}
+.slides-col{display:flex;flex-direction:column;gap:10px;padding:12px;min-height:0}
+.col-head{font:600 13px var(--ui);text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);padding-left:4px}
+.thumbs{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:12px;padding:4px 4px 6px}
+.thumb{display:flex;gap:6px;align-items:flex-start;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+.tnum{font:600 13px/1 var(--ui);width:14px;padding-top:4px;color:var(--ink-soft)}
+.tbox{width:150px;height:84.375px;border-radius:10px;border:2.5px solid var(--line);overflow:hidden;position:relative;flex:none;background:#fff}
+.tbox .slide{pointer-events:none}
+.thumb.on .tbox{outline:4px solid var(--pink);outline-offset:2px}
+.thumb.on .tnum{color:var(--pink)}
+.thumb.drag-over .tbox{outline:4px dashed var(--grape);outline-offset:2px}
+.add-slide{justify-content:center;background:var(--sun)}
+
+.center{display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0}
+.toolstrip{display:flex;flex-wrap:wrap;gap:6px;padding:8px}
+.tool{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:68px;padding:7px 8px 6px;border-radius:14px;border:2.5px solid transparent;background:none;cursor:pointer;font:600 13px var(--ui)}
+.tool span{font-size:24px;line-height:1}
+.tool:hover{background:#F2EFFF}
+.tool.on{background:var(--sky);border-color:var(--line)}
+.drawer{padding:10px 12px;display:flex;flex-direction:column;gap:8px;position:relative}
+.drawer-x{position:absolute;right:8px;top:8px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;padding-right:44px}
+.tab{font:600 13px var(--ui);padding:6px 10px;border-radius:999px;border:2px solid var(--line);background:#fff;cursor:pointer}
+.tab.on{background:var(--ink);color:#fff}
+.emoji-grid{display:flex;flex-wrap:wrap;gap:2px;max-height:132px;overflow:auto}
+.emo{font-size:30px;line-height:1;width:46px;height:46px;border:0;border-radius:12px;background:none;cursor:pointer;transition:transform .12s}
+.emo:hover{background:#F2EFFF;transform:scale(1.2) rotate(-6deg)}
+.drow{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.dlabel{font:600 13px var(--ui);color:var(--ink-soft);min-width:52px}
+.shape-btn{width:56px;height:46px;border-radius:12px;border:2px solid #DDD8F5;background:#fff;cursor:pointer;display:grid;place-items:center;padding:6px}
+.shape-btn:hover{border-color:var(--line)}
+.shape-btn svg,.shape-btn div{width:100%;height:100%}
+
+.stage-wrap{flex:1;min-height:0;display:grid;place-items:center;position:relative}
+.stage{position:relative;border-radius:14px;box-shadow:0 0 0 2.5px var(--line),6px 6px 0 var(--line);overflow:hidden;background:#fff;touch-action:none}
+.stage.drop{box-shadow:0 0 0 5px var(--pink),6px 6px 0 var(--line)}
+.tip{display:flex;gap:8px;align-items:center;font:500 14px var(--ui);color:var(--ink-soft);min-height:20px;padding-left:4px}
+
+.inspector{padding:14px;overflow:auto;min-height:0;display:flex;flex-direction:column;gap:14px}
+.ih{margin:0;font:600 20px/1.1 var(--ui)}
+.hint{margin:0;font:500 14px/1.4 var(--body);color:var(--ink-soft)}
+.isec{display:flex;flex-direction:column;gap:7px}
+.il{font:600 12px var(--ui);text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft)}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.num{font:600 16px var(--ui);min-width:40px;text-align:center;font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:500 14px/1 var(--ui);padding:7px 11px;border-radius:999px;border:2px solid #D8D3F2;background:#fff;cursor:pointer}
+.chip:hover{border-color:var(--line)}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.sws{display:flex;flex-wrap:wrap;gap:6px}
+.sw{width:30px;height:30px;border-radius:50%;border:2.5px solid var(--line);cursor:pointer;padding:0;font:600 10px var(--ui)}
+.sw.sq{border-radius:9px;width:38px;height:28px}
+.sw.on{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--pink)}
+.sw-auto{background:conic-gradient(#ff4fa3,#ffc83d,#22c49a,#5bc0ff,#6d4aff,#ff4fa3)!important}
+.inp,.txta{width:100%;font:600 16px var(--body);color:var(--ink);padding:10px 12px;border:2.5px solid var(--line);border-radius:12px;background:#fff}
+.txta{min-height:90px;resize:vertical;font-weight:500;line-height:1.4}
+.qrow{display:flex;gap:6px;align-items:center}
+.qrow .inp{flex:1;min-width:0;padding:8px 10px;font-size:15px}
+.qok{flex:none;width:38px;height:38px;border-radius:50%;border:2.5px solid var(--line);background:#fff;cursor:pointer;font-size:16px}
+.qok.on{background:var(--mint)}
+
+/* levels + word helper */
+.lvl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.lvl{display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 8px;border-radius:16px;border:2.5px solid var(--line);background:#fff;cursor:pointer;box-shadow:0 3px 0 var(--line);font-family:var(--ui)}
+.lvl b{font:600 17px/1.1 var(--ui)} .lvl span{font:500 13px var(--body);color:var(--ink-soft)}
+.lvl .lvl-ico{font-size:34px;line-height:1.1;color:inherit}
+.lvl em{font:600 11px var(--ui);font-style:normal;text-transform:uppercase;letter-spacing:.06em;background:#ECE9F8;color:var(--ink-soft);padding:3px 7px;border-radius:999px;margin-top:2px}
+.lvl.on{background:var(--sun);box-shadow:0 0 0 3px #fff,0 0 0 6px var(--pink)}
+.lvl:disabled{opacity:.55;cursor:default;box-shadow:none;border-style:dashed}
+/* kid-facing New show */
+.modal.kid{width:min(940px,100%);padding:20px 22px}
+.kid-stars{display:flex;gap:6px;font-size:24px;line-height:1;margin-bottom:10px;padding-right:48px}
+.kid-q{font:700 34px/1.15 var(--ui)!important;display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 4px!important}
+.kid-sub{font-size:17px!important;margin-bottom:14px!important}
+.kid-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+.kcard{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:14px 8px;min-height:120px;border-radius:20px;border:2.5px solid var(--line);background:#fff;box-shadow:0 4px 0 var(--line);cursor:pointer;font:600 17px/1.15 var(--ui);text-align:center;transition:transform .12s}
+.kcard:hover{transform:translateY(-3px) rotate(-1deg);background:#FFFBEA}
+.kcard:active{transform:translateY(3px);box-shadow:0 1px 0 var(--line)}
+.kcard .k-ico{font-size:48px;line-height:1}
+.kcard.on{background:var(--sun);box-shadow:0 0 0 3px #fff,0 0 0 6px var(--pink)}
+.kcard.other{border-style:dashed;background:#F6F4FF}
+.stage-seed .kid-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.stage-seed .kcard{min-height:150px;font-size:20px}
+.stage-seed .kcard .k-ico{font-size:66px}
+.stage-seed .kid-q{font-size:40px!important}
+.kid-themes{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+.kid-themes .tc-ico{font-size:54px}
+.kid-themes .tc-name{font-size:15px}
+.kid-type{display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 16px}
+.kid-inp{flex:1 1 240px;min-width:0;font:600 26px var(--ui)!important;padding:14px 16px!important;border-radius:16px!important}
+.kid-hint{margin:14px 0 6px!important}
+.kid-next{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.kid-next.center{justify-content:center}
+.kid-go{font-size:22px!important;padding:16px 24px!important}
+.kid-preview{width:min(560px,100%);aspect-ratio:16/9;margin:6px auto 0;border-radius:18px;border:2.5px solid var(--line);box-shadow:5px 5px 0 var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:16px;text-align:center}
+.kid-preview .k-ico{font-size:64px;line-height:1;animation:d-bounce 1.2s ease-in-out infinite}
+.kid-preview b{font-size:clamp(26px,5vw,42px);font-weight:400;line-height:1.05;text-wrap:balance}
+.kid-preview span:last-child{font:600 20px var(--ui)}
+.kid-foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-top:22px;padding-top:14px;border-top:2px dashed #DDD8F5}
+.linkbtn{background:none;border:0;padding:6px 0;font:500 14px var(--body);color:var(--ink-soft);text-decoration:underline;cursor:pointer}
+/* home */
+.home{width:min(1120px,100%);margin:0 auto;padding-inline:16px;padding-block:12px 40px;display:flex;flex-direction:column;gap:26px}
+.home-top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.home-top-acts{display:flex;gap:8px}
+#homeLevel span{color:var(--ink-soft);font-weight:500}
+#logoHome{cursor:pointer}
+.home-hero{display:flex;flex-wrap:wrap;align-items:center;gap:8px 22px}
+.mascot{width:132px;height:auto;flex:none;overflow:visible}
+.m-bob{animation:m-bob 2.4s ease-in-out infinite;transform-origin:70px 136px}
+.m-arm{animation:m-wave 1.6s ease-in-out infinite;transform-origin:120px 92px}
+.m-eyes{animation:m-blink 4.5s infinite;transform-origin:70px 86px}
+@keyframes m-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes m-wave{0%,100%{transform:rotate(0)}50%{transform:rotate(-22deg)}}
+@keyframes m-blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.hello{min-width:0;flex:1 1 260px}
+.hello h1{margin:0;font:700 clamp(40px,7vw,64px)/1 var(--ui);letter-spacing:-1px;color:var(--grape);text-wrap:balance}
+.hello p{margin:8px 0 0;font:600 clamp(20px,3vw,26px)/1.3 var(--ui);display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.home-main{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px}
+.new-card{position:relative;overflow:hidden;min-height:250px;border-radius:28px;border:3px solid var(--line);box-shadow:6px 6px 0 var(--line);cursor:pointer;color:#fff;
+  background:radial-gradient(circle at 30% 20%,#8B6BFF 0%,var(--grape) 55%,#4F2FD6 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:28px 20px;transition:transform .15s,box-shadow .15s}
+.new-card:hover{transform:translate(-2px,-3px) rotate(-.6deg);box-shadow:9px 10px 0 var(--line)}
+.new-card:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--line)}
+.new-card b{font:700 clamp(30px,4.5vw,44px)/1.05 var(--ui);text-shadow:0 3px 0 rgba(0,0,0,.18);text-align:center}
+.new-card > span:last-child{font:500 18px/1.3 var(--ui);opacity:.92;text-align:center}
+.nc-plus{font-size:64px;line-height:1;animation:d-pulse 1.6s ease-in-out infinite}
+.nc-stk{position:absolute;font-size:40px;line-height:1;opacity:.85;animation:floaty 5s ease-in-out infinite}
+.nc-stk:nth-child(2n){animation-duration:6.4s;animation-delay:-2s}
+.cont-card{display:flex;flex-direction:column;gap:14px;padding:16px;cursor:pointer;transition:transform .15s}
+.cont-card:hover{transform:translateY(-3px)}
+.cont-info{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0}
+.eyebrow{font:600 12px var(--ui);text-transform:uppercase;letter-spacing:.1em;color:var(--pink)}
+.cont-info b{font:600 24px/1.15 var(--ui);overflow-wrap:anywhere}
+.cont-meta{font:500 14px var(--body);color:var(--ink-soft)}
+.cont-btn{margin-top:6px;pointer-events:none}
+.hthumb{position:relative;overflow:hidden;border-radius:14px;border:2.5px solid var(--line);flex:none;background:#fff}
+.hthumb .slide{pointer-events:none}
+.shelf{display:flex;flex-direction:column;gap:14px}
+.shelf-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.shelf-head h2{margin:0;font:700 28px/1 var(--ui)}
+.show-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:22px 18px}
+.show-card{background:var(--panel);border:2.5px solid var(--line);border-radius:20px;box-shadow:4px 4px 0 var(--line);padding:9px 9px 12px;display:flex;flex-direction:column;gap:9px;transform:rotate(var(--tilt,0deg));transition:transform .15s}
+.show-card:hover{transform:rotate(0) translateY(-3px)}
+.show-open{border:0;background:none;padding:0;cursor:pointer;display:flex;justify-content:center}
+.show-open .hthumb{border-radius:12px}
+.show-title{font:600 17px/1.2 var(--ui);padding:0 4px;overflow-wrap:anywhere}
+.show-acts{display:flex;flex-wrap:wrap;gap:6px;padding:0 4px}
+@media (max-width: 760px){ .home-main{grid-template-columns:minmax(0,1fr)} .mascot{width:104px} }
+@media (prefers-reduced-motion: reduce){ .m-bob,.m-arm,.m-eyes,.nc-plus,.nc-stk{animation:none} }
+.stage-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.stage-card{display:flex;gap:10px;align-items:flex-start;text-align:left;padding:12px;border-radius:16px;border:2.5px solid var(--line);background:#fff;cursor:pointer;box-shadow:0 3px 0 var(--line)}
+.stage-card .sc-ico{font-size:30px;line-height:1}
+.stage-card .sc-txt{display:flex;flex-direction:column;gap:4px;min-width:0}
+.stage-card b{font:600 16px/1.15 var(--ui)}
+.stage-card .sc-txt span{font:500 13px/1.35 var(--body);color:var(--ink-soft)}
+.stage-card.on{background:#E3F8EF;box-shadow:0 0 0 3px #fff,0 0 0 6px var(--mint)}
+.wprompt{font:600 18px/1.35 var(--ui);background:#EEF6FF;border:2px dashed #8FB8E8;border-radius:14px;padding:8px 12px;padding-right:12px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.wgrid.big .wchip{font-size:26px;padding:12px 16px}
+.checklist{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.ck{font:600 14px/1 var(--ui);padding:7px 11px;border-radius:999px;border:2px dashed #C9C3E6;color:var(--ink-soft)}
+.ck.done{border:2px solid var(--line);background:var(--mint);color:var(--ink)}
+.ck.done::after{content:' ⭐'}
+.wgrid{display:flex;flex-wrap:wrap;gap:8px;max-height:160px;overflow:auto;padding:2px 2px 4px}
+.wchip{font:600 21px/1 var(--ui);padding:9px 14px;border-radius:14px;border:2.5px solid var(--line);background:#FFF6D6;box-shadow:0 3px 0 var(--line);cursor:pointer}
+.wchip:hover{background:#FFEDA8}
+.wchip:active{transform:translateY(3px);box-shadow:none}
+.say-tip{margin-left:2px;padding:4px 7px;min-width:0;box-shadow:0 2px 0 var(--line)}
+.simple .tool{min-width:78px;font-size:15px}
+.simple .tool span{font-size:30px}
+.simple .inspector .btn{font-size:16px}
+
+/* slide canvas (logical 1600 x 900) */
+.slide{position:absolute;left:0;top:0;width:1600px;height:900px;overflow:hidden;transform-origin:0 0;font-family:'Fredoka',system-ui,sans-serif;user-select:none;-webkit-user-select:none}
+.deco span{position:absolute;opacity:.5;line-height:1;pointer-events:none;transform:rotate(var(--r,0deg))}
+.drawing,.draw-layer{position:absolute;left:0;top:0;width:100%;height:100%}
+.drawing{pointer-events:none}
+.draw-layer{cursor:crosshair;touch-action:none;z-index:50}
+.el{position:absolute;transform-origin:center center}
+.pop,.inner{width:100%;height:100%}
+.el-text .pop,.el-text .inner,.el-quiz .pop,.el-quiz .inner{height:auto}
+.txt{white-space:pre-wrap;overflow-wrap:break-word;line-height:1.15;outline:none;cursor:inherit}
+.txt.empty::before{content:attr(data-ph);opacity:.4}
+.txt.prompt::before{font-size:.62em;line-height:1.3;opacity:.6;display:block}
+.txt.prompt{border:.06em dashed currentColor;border-radius:.4em;padding:.3em .45em;min-height:2.4em}
+.tstyle-card{padding:.35em .6em;border-radius:.45em;box-shadow:0 .1em 0 rgba(0,0,0,.12)}
+.tstyle-outline{text-shadow:.05em 0 0 var(--oc),-.05em 0 0 var(--oc),0 .05em 0 var(--oc),0 -.05em 0 var(--oc),.035em .035em 0 var(--oc),-.035em .035em 0 var(--oc),.035em -.035em 0 var(--oc),-.035em -.035em 0 var(--oc),0 .12em 0 rgba(0,0,0,.18)}
+.stk{text-align:center;line-height:1;display:grid;place-items:center;filter:drop-shadow(0 6px 0 rgba(0,0,0,.12))}
+.imgbox{width:100%;height:100%;overflow:hidden;border-radius:16px}
+.imgbox img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.frame-frame{border:16px solid #fff;border-radius:10px;box-shadow:0 10px 0 rgba(0,0,0,.14)}
+.frame-circle{border-radius:50%;border:14px solid #fff;box-shadow:0 10px 0 rgba(0,0,0,.14)}
+.img-ph{width:100%;height:100%;border:8px dashed rgba(42,33,82,.45);border-radius:24px;background:rgba(255,255,255,.55);display:grid;place-content:center;text-align:center;font:600 46px/1.3 'Fredoka',sans-serif;color:#2A2152}
+.img-ph small{display:block;font-size:30px;font-weight:500;opacity:.7}
+.shp{width:100%;height:100%}
+.shp svg{width:100%;height:100%;display:block;overflow:visible}
+.quiz .q-q{line-height:1.15;margin-bottom:.6em;text-align:center}
+.q-opts{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.q-opt{border:0;border-radius:28px;color:#fff;padding:.55em .7em;font-family:'Fredoka',sans-serif;font-weight:600;line-height:1.15;box-shadow:0 10px 0 rgba(0,0,0,.2);position:relative;pointer-events:none;text-shadow:0 2px 0 rgba(0,0,0,.2)}
+.q-opt.right::after{content:'✅';position:absolute;right:-.3em;top:-.5em;font-size:1.3em}
+.q-opt.right{animation:qyay .6s}
+.q-opt.wrong{animation:qshake .5s;opacity:.55}
+
+/* edit-mode selection */
+.edit .el{cursor:move}
+.edit .el:hover{outline:calc(3px*var(--inv,1)) dashed rgba(109,74,255,.45);outline-offset:calc(5px*var(--inv,1))}
+.edit .el.sel{outline:calc(3px*var(--inv,1)) dashed #6D4AFF;outline-offset:calc(6px*var(--inv,1))}
+.edit .el.editing{cursor:text;outline-style:solid}
+.edit .el.editing .txt{user-select:text;-webkit-user-select:text;cursor:text}
+.h{position:absolute;width:calc(30px*var(--inv,1));height:calc(30px*var(--inv,1));border-radius:50%;background:#FF4FA3;border:calc(4px*var(--inv,1)) solid #fff;box-shadow:0 0 0 calc(2px*var(--inv,1)) #2A2152;z-index:5;display:grid;place-items:center;color:#fff;font:700 calc(16px*var(--inv,1))/1 'Fredoka',sans-serif}
+.h-resize{right:calc(-21px*var(--inv,1));bottom:calc(-21px*var(--inv,1));cursor:nwse-resize}
+.h-rot{left:50%;top:calc(-58px*var(--inv,1));margin-left:calc(-15px*var(--inv,1));background:#6D4AFF;cursor:grab}
+
+/* dances + entrances (show mode) */
+.dance-bounce{animation:d-bounce 1.1s ease-in-out infinite}
+.dance-wiggle{animation:d-wiggle .9s ease-in-out infinite}
+.dance-spin{animation:d-spin 4s linear infinite}
+.dance-pulse{animation:d-pulse 1.2s ease-in-out infinite}
+.dance-float{animation:d-float 3.2s ease-in-out infinite}
+@keyframes d-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12%)}}
+@keyframes d-wiggle{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}}
+@keyframes d-spin{to{transform:rotate(360deg)}}
+@keyframes d-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+@keyframes d-float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-7%) rotate(3deg)}}
+.pop-in{animation:popIn .55s cubic-bezier(.3,1.5,.5,1) both}
+@keyframes popIn{0%{transform:scale(.2);opacity:0}100%{transform:scale(1);opacity:1}}
+.showing .deco span{animation:floaty 5s ease-in-out infinite}
+.showing .deco span:nth-child(2n){animation-duration:6.5s;animation-delay:-2s}
+@keyframes floaty{0%,100%{transform:translateY(0) rotate(var(--r,0deg))}50%{transform:translateY(-18px) rotate(calc(var(--r,0deg) + 8deg))}}
+@keyframes qyay{40%{transform:scale(1.12)}}
+@keyframes qshake{20%,60%{transform:translateX(-14px)}40%,80%{transform:translateX(14px)}}
+
+/* modal */
+.modal-back{position:fixed;inset:0;background:rgba(42,33,82,.45);display:grid;place-items:center;padding:16px;z-index:80;overflow:auto}
+.modal{width:min(860px,100%);max-height:calc(100% - 8px);overflow:auto;padding:22px;position:relative}
+.modal h2{margin:0 0 6px;font:700 28px/1.1 var(--ui);text-wrap:balance}
+.modal .sub{margin:0 0 16px;font:500 15px/1.4 var(--body);color:var(--ink-soft)}
+.modal-x{position:absolute;right:14px;top:14px}
+.lbl{display:block;font:600 15px var(--ui);margin:16px 0 8px}
+.theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.tcard{position:relative;aspect-ratio:16/9;border-radius:14px;border:2.5px solid var(--line);overflow:hidden;cursor:pointer;padding:0;display:grid;place-items:center;max-width:100%}
+.tcard .tc-ico{font-size:44px;line-height:1;transition:transform .2s}
+.tcard:hover .tc-ico{transform:scale(1.2) rotate(-8deg)}
+.tcard .tc-deco{position:absolute;font-size:20px;opacity:.6}
+.tcard .tc-name{position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:2.5px solid var(--line);font:600 13px/1 var(--ui);padding:6px 4px;color:var(--ink)}
+.tcard.on{outline:4px solid var(--pink);outline-offset:3px}
+.layout-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;justify-items:center}
+.lcard{background:none;border:0;padding:0;cursor:pointer;display:flex;flex-direction:column;gap:6px;align-items:center;font:600 15px var(--ui)}
+.lbox{width:200px;height:112.5px;position:relative;overflow:hidden;border-radius:12px;border:2.5px solid var(--line);transition:transform .15s}
+.lcard:hover .lbox{transform:translateY(-3px) rotate(-1deg);box-shadow:4px 4px 0 var(--line)}
+.lbox .slide{pointer-events:none}
+.wz-go{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.plist{display:flex;flex-direction:column;gap:12px}
+.prow{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:10px;border:2px solid #DDD8F5;border-radius:16px}
+.prow.cur{border-color:var(--grape);background:#F6F3FF}
+.pinfo{flex:1 1 160px;min-width:0}
+.pinfo b{display:block;font:600 18px/1.2 var(--ui);overflow-wrap:anywhere}
+.pinfo span{font:500 13px var(--body);color:var(--ink-soft)}
+
+/* present mode */
+.present{position:fixed;inset:0;background:var(--stage);z-index:100;color:#fff}
+.p-area{position:absolute;left:16px;right:16px;top:16px;bottom:84px;display:grid;place-items:center}
+.p-holder{grid-area:1/1;position:relative;overflow:hidden;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.p-holder .q-opt{pointer-events:auto;cursor:pointer}
+.p-holder .q-opt:hover{filter:brightness(1.1)}
+.p-bar{position:absolute;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;align-items:center;gap:4px;padding:6px;border-radius:999px;background:rgba(255,255,255,.1);max-width:calc(100% - 24px);overflow-x:auto}
+.p-bar button{background:none;border:0;color:#fff;font:600 15px/1 var(--ui);padding:10px 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.p-bar button:hover{background:rgba(255,255,255,.16)}
+.p-bar button.on{background:rgba(255,255,255,.28)}
+#pCount{font:600 15px var(--ui);padding:0 8px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.p-sep{width:1px;height:22px;background:rgba(255,255,255,.25);margin:0 4px;flex:none}
+.p-notes{position:absolute;left:50%;transform:translateX(-50%);bottom:76px;width:min(760px,calc(100% - 32px));background:rgba(255,255,255,.95);color:var(--ink);border-radius:16px;padding:12px 16px;font:500 18px/1.4 var(--body);z-index:3;white-space:pre-wrap}
+.enter-pop{animation:e-pop .6s cubic-bezier(.3,1.5,.5,1) both}
+.enter-slide{animation:e-slide .55s cubic-bezier(.2,.9,.3,1) both}
+.enter-zoom{animation:e-zoom .6s cubic-bezier(.2,.9,.3,1) both}
+.enter-spin{animation:e-spin .8s cubic-bezier(.3,1.3,.5,1) both}
+.enter-bounce{animation:e-bounce .9s both}
+.enter-fade{animation:e-fade .6s both}
+.leaving{animation:e-leave .4s forwards;z-index:-1}
+@keyframes e-pop{from{transform:scale(.6);opacity:0}}
+@keyframes e-slide{from{transform:translateX(calc(var(--dir,1)*70vw));opacity:0}}
+@keyframes e-zoom{from{transform:scale(1.6);opacity:0}}
+@keyframes e-spin{from{transform:rotate(-200deg) scale(.15);opacity:0}}
+@keyframes e-bounce{0%{transform:translateY(-110vh)}55%{transform:translateY(0)}70%{transform:translateY(-6%)}85%{transform:translateY(0)}93%{transform:translateY(-1.5%)}100%{transform:translateY(0)}}
+@keyframes e-fade{from{opacity:0}}
+@keyframes e-leave{to{opacity:0;transform:scale(.94)}}
+.spark{position:fixed;pointer-events:none;z-index:160;font-size:24px;line-height:1;animation:spark .9s ease-out forwards;translate:-50% -50%}
+@keyframes spark{to{opacity:0;transform:translateY(-40px) scale(.4) rotate(90deg)}}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:200}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;font:600 15px/1.3 var(--ui);padding:12px 18px;border-radius:14px;z-index:300;max-width:calc(100% - 32px);box-shadow:4px 4px 0 var(--pink)}
+
+@media (max-width: 1100px){ .main{grid-template-columns:190px minmax(0,1fr) 250px} }
+@media (max-width: 900px){
+  html,body{height:auto}
+  .app{height:auto;min-height:100%}
+  .main{grid-template-columns:minmax(0,1fr)}
+  .center{order:1} .slides-col{order:2} .inspector{order:3;overflow:visible}
+  .thumbs{flex-direction:row;overflow-x:auto;overflow-y:hidden}
+  .tool{min-width:0;flex:1 1 60px}
+  .logo{font-size:22px}
+}
+@media (prefers-reduced-motion: reduce){
+  [class*="dance-"],.showing .deco span{animation:none!important}
+  .pop-in,.p-holder,.leaving{animation-duration:.01s!important;animation-delay:0s!important}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="topbar">
+    <div class="logo" id="logoHome" role="button" tabindex="0" title="Home" aria-label="MyPresso home"><span class="logo-mark" aria-hidden="true">▶</span><span class="logo-word"><b>My</b><b>Pres</b><b>so</b></span></div>
+    <input id="titleInput" class="title-input" aria-label="Presentation name" maxlength="60" autocomplete="off">
+    <div class="top-actions">
+      <button class="btn" id="btnHome">🏠 Home</button>
+      <button class="btn" id="btnNew">✨ New</button>
+      <button class="btn warm" id="btnLevel" title="Pick a level"><span id="levelIcon">🐣</span> <span id="levelName">Year 1</span></button>
+      <button class="btn" id="btnTheme">🎨 <span id="themeName">Theme</span></button>
+      <button class="btn icon" id="btnUndo" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
+      <button class="btn icon" id="btnRedo" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
+      <button class="btn icon" id="btnSound" title="Sounds on or off" aria-label="Sounds on or off">🔊</button>
+      <button class="btn go" id="btnPresent">▶ Show time!</button>
+    </div>
+  </header>
+  <main class="main">
+    <aside class="slides-col panel">
+      <div class="col-head">Slides</div>
+      <div id="thumbs" class="thumbs"></div>
+      <button class="btn add-slide" id="btnAddSlide">➕ Add slide</button>
+    </aside>
+    <section class="center">
+      <div class="toolstrip panel" id="toolstrip">
+        <button class="tool" data-tool="title"><span>🔤</span>Title</button>
+        <button class="tool" data-tool="text"><span>✏️</span>Words</button>
+        <button class="tool" data-tool="stickers"><span>🦄</span>Stickers</button>
+        <button class="tool" data-tool="picture"><span>🖼️</span>Picture</button>
+        <button class="tool" data-tool="shapes"><span>⭐</span>Shapes</button>
+        <button class="tool" data-tool="draw"><span>🖍️</span>Draw</button>
+        <button class="tool" data-tool="quiz"><span>❓</span>Quiz</button>
+      </div>
+      <div id="drawer" class="drawer panel" hidden></div>
+      <div class="stage-wrap" id="stageWrap"><div class="stage" id="stage"></div></div>
+      <div class="tip"><span aria-hidden="true">💡</span><span id="tipText"></span><button class="btn sm icon say-tip" id="tipSay" aria-label="Hear this tip" title="Hear this tip">🔈</button></div>
+    </section>
+    <aside class="inspector panel" id="inspector"></aside>
+  </main>
+</div>
+
+<section class="home" id="home" hidden>
+  <header class="home-top">
+    <div class="logo" aria-label="MyPresso"><span class="logo-mark" aria-hidden="true">▶</span><span class="logo-word"><b>My</b><b>Pres</b><b>so</b></span></div>
+    <div class="home-top-acts">
+      <button class="btn sm" id="homeLevel" title="Level settings for grown-ups"></button>
+      <button class="btn sm icon" id="homeSound" aria-label="Sounds on or off">🔊</button>
+    </div>
+  </header>
+
+  <div class="home-hero">
+    <svg class="mascot" viewBox="0 0 140 150" role="img" aria-label="Presso, the MyPresso helper">
+      <g class="m-bob">
+        <path d="M70 8 L74 22 L88 22 L77 30 L81 44 L70 36 L59 44 L63 30 L52 22 L66 22Z" fill="#FFC83D" stroke="#2A2152" stroke-width="3" stroke-linejoin="round"/>
+        <line x1="70" y1="40" x2="70" y2="54" stroke="#2A2152" stroke-width="3"/>
+        <rect x="18" y="52" width="104" height="84" rx="38" fill="#FF4FA3" stroke="#2A2152" stroke-width="3.5"/>
+        <g class="m-arm"><path d="M120 92 Q136 80 134 64" fill="none" stroke="#2A2152" stroke-width="7" stroke-linecap="round"/><circle cx="134" cy="62" r="7" fill="#FF4FA3" stroke="#2A2152" stroke-width="3"/></g>
+        <path d="M20 96 Q6 104 10 118" fill="none" stroke="#2A2152" stroke-width="7" stroke-linecap="round"/>
+        <g class="m-eyes"><ellipse cx="52" cy="86" rx="9" ry="11" fill="#fff" stroke="#2A2152" stroke-width="3"/><ellipse cx="88" cy="86" rx="9" ry="11" fill="#fff" stroke="#2A2152" stroke-width="3"/>
+          <circle cx="54" cy="88" r="4.5" fill="#2A2152"/><circle cx="90" cy="88" r="4.5" fill="#2A2152"/></g>
+        <ellipse cx="38" cy="106" rx="7" ry="4.5" fill="#FF9BCB"/><ellipse cx="102" cy="106" rx="7" ry="4.5" fill="#FF9BCB"/>
+        <path d="M58 106 Q70 118 82 106" fill="none" stroke="#2A2152" stroke-width="3.5" stroke-linecap="round"/>
+      </g>
+    </svg>
+    <div class="hello">
+      <h1 id="homeHi">Hi there!</h1>
+      <p><span id="homeAsk">What shall we make today?</span> <button class="btn sm icon" id="homeSay" aria-label="Hear it">🔈</button></p>
+    </div>
+  </div>
+
+  <div class="home-main">
+    <button class="new-card" id="homeNew">
+      <span class="nc-stk" style="left:6%;top:10%;--r:-14deg">🦄</span><span class="nc-stk" style="right:7%;top:8%;--r:12deg">🚀</span>
+      <span class="nc-stk" style="left:10%;bottom:9%;--r:10deg">🦖</span><span class="nc-stk" style="right:9%;bottom:12%;--r:-8deg">⭐</span>
+      <span class="nc-plus" aria-hidden="true">✨</span>
+      <b>Make a new show</b>
+      <span>Pick a topic, pick your colours, go!</span>
+    </button>
+    <div class="cont-card panel" id="homeContinue" role="button" tabindex="0" hidden></div>
+  </div>
+
+  <section class="shelf">
+    <div class="shelf-head"><h2>My shows</h2><button class="btn sm" id="homeTidy">🧹 Tidy up</button></div>
+    <div class="show-grid" id="homeGrid"></div>
+    <p class="hint" id="homeEmpty" hidden>Your shows will live here. Press “Make a new show” to start!</p>
+  </section>
+</section>
+
+<div class="modal-back" id="modal" hidden>
+  <div class="modal panel" role="dialog" aria-modal="true">
+    <button class="btn icon sm modal-x" id="modalX" aria-label="Close">✖</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="present" id="present" hidden>
+  <div class="p-area" id="pArea"></div>
+  <div class="p-notes" id="pNotes" hidden></div>
+  <div class="p-bar">
+    <button data-p="prev" aria-label="Back">◀</button><span id="pCount"></span><button data-p="next" aria-label="Next">▶</button>
+    <span class="p-sep"></span>
+    <button data-p="read" id="pRead">🗣️ Read</button>
+    <button data-p="notes" id="pNotesBtn">📝 Notes</button>
+    <button data-p="wand" id="pWand">🪄 Wand</button>
+    <button data-p="party" aria-label="Confetti">🎉</button>
+    <button data-p="sound" id="pSound" aria-label="Sounds on or off">🔊</button>
+    <button data-p="exit">✖ Done</button>
+  </div>
+</div>
+<canvas id="confetti"></canvas>
+<div id="toast" class="toast" role="status" hidden></div>
+<input type="file" id="fileInput" accept="image/*" hidden>
+
+<script>
+(() => {
+'use strict';
+const W = 1600, H = 900, TW = 150;
+const $ = (s, r = document) => r.querySelector(s);
+const uid = () => Math.random().toString(36).slice(2, 10);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const clone = o => JSON.parse(JSON.stringify(o));
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- data ---------- */
+const THEMES = {
+  space:  {name:'Space Adventure', icon:'🚀', bg:'radial-gradient(circle at 25% 20%, #4c3bb5 0%, #241a6b 45%, #0e0a33 100%)', ink:'#F4F1FF', title:'#FFD84D', card:'rgba(255,255,255,.14)', outline:'#1b1450', font:'Chewy', body:'Fredoka', deco:['⭐','🪐','✨','🌙','☄️','🛸']},
+  dino:   {name:'Dino Jungle', icon:'🦕', bg:'linear-gradient(160deg,#ecfccb 0%,#bbf7d0 45%,#6ee7b7 100%)', ink:'#14532d', title:'#c2410c', card:'rgba(255,255,255,.8)', outline:'#ffffff', font:'Luckiest Guy', body:'Fredoka', deco:['🌿','🦖','🌴','🥚','🦕','🍃']},
+  ocean:  {name:'Ocean Friends', icon:'🐳', bg:'linear-gradient(180deg,#cffafe 0%,#7dd3fc 55%,#38bdf8 100%)', ink:'#0c3555', title:'#0b4f8a', card:'rgba(255,255,255,.78)', outline:'#ffffff', font:'Baloo 2', body:'Fredoka', deco:['🐠','🫧','🐙','🐚','🐳','🦀']},
+  unicorn:{name:'Unicorn Dreams', icon:'🦄', bg:'linear-gradient(135deg,#fce7f3 0%,#f5d0fe 50%,#dbeafe 100%)', ink:'#581c87', title:'#db2777', card:'rgba(255,255,255,.8)', outline:'#ffffff', font:'Bubblegum Sans', body:'Fredoka', deco:['🌈','💖','✨','☁️','🦄','💜']},
+  fairy:  {name:'Fairy Garden', icon:'🧚', bg:'linear-gradient(160deg,#fef9c3 0%,#fbcfe8 55%,#bbf7d0 100%)', ink:'#4a2c2a', title:'#be185d', card:'rgba(255,255,255,.8)', outline:'#ffffff', font:'Patrick Hand', body:'Fredoka', deco:['🌸','🦋','🍄','🌷','🌼','🐞']},
+  robot:  {name:'Robot Lab', icon:'🤖', bg:'linear-gradient(160deg,#e0f2fe 0%,#a5f3fc 50%,#5eead4 100%)', ink:'#123a3a', title:'#7c3aed', card:'rgba(255,255,255,.8)', outline:'#ffffff', font:'Luckiest Guy', body:'Fredoka', deco:['⚙️','🔩','💡','🔋','🛰️','🤖']},
+  candy:  {name:'Candy Land', icon:'🍭', bg:'linear-gradient(135deg,#fef08a 0%,#fecdd3 50%,#f5d0fe 100%)', ink:'#831843', title:'#e11d48', card:'rgba(255,255,255,.8)', outline:'#ffffff', font:'Chewy', body:'Fredoka', deco:['🍭','🧁','🍩','🍬','🍓','🍦']},
+  hero:   {name:'Super Hero', icon:'⚡', bg:'radial-gradient(circle at 50% 45%, #fffbeb 0%, #fde047 45%, #fb923c 100%)', ink:'#1e1b4b', title:'#1d4ed8', card:'rgba(255,255,255,.85)', outline:'#ffffff', font:'Luckiest Guy', body:'Fredoka', deco:['💥','⚡','⭐','🦸','🛡️','💫']},
+  sports: {name:'Game Day', icon:'⚽', bg:'linear-gradient(180deg,#bae6fd 0%,#e0f2fe 58%,#86efac 58%,#4ade80 100%)', ink:'#0f2e1d', title:'#1e3a8a', card:'rgba(255,255,255,.85)', outline:'#ffffff', font:'Luckiest Guy', body:'Fredoka', deco:['⚽','🏀','🏆','🥇','⚾','🎾']},
+  pets:   {name:'Paws & Whiskers', icon:'🐾', bg:'linear-gradient(160deg,#fff7ed 0%,#fed7aa 60%,#fdba74 100%)', ink:'#5a2a0c', title:'#c2410c', card:'rgba(255,255,255,.8)', outline:'#ffffff', font:'Baloo 2', body:'Fredoka', deco:['🐾','🐶','🐱','🦴','🐟','💛']},
+};
+const FONTS = ['Fredoka','Baloo 2','Chewy','Luckiest Guy','Bubblegum Sans','Patrick Hand','Comic Neue'];
+const ONE_WEIGHT = new Set(['Chewy','Luckiest Guy','Bubblegum Sans','Patrick Hand']);
+const COLORS = ['#1f1b3a','#ffffff','#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#92400e','#64748b'];
+const BGS = ['#ffffff','#fef3c7','#dcfce7','#e0f2fe','#fce7f3','#ede9fe','linear-gradient(135deg,#fde68a,#fca5a5)','linear-gradient(135deg,#a7f3d0,#93c5fd)','linear-gradient(135deg,#f5d0fe,#bfdbfe)','linear-gradient(160deg,#1e1b4b,#4c1d95)'];
+const QCOL = ['#ea580c','#7c3aed','#059669','#2563eb'];
+const TRANSITIONS = [['pop','Pop'],['slide','Slide'],['zoom','Zoom'],['spin','Spin'],['bounce','Drop'],['fade','Fade']];
+const DANCES = [['none','Still'],['bounce','Bounce'],['wiggle','Wiggle'],['spin','Spin'],['pulse','Pulse'],['float','Float']];
+const SHAPES = ['circle','rect','star','heart','cloud','bubble','arrow'];
+const STICKERS = {
+  Animals:'🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🐔 🐧 🐦 🦉 🦄 🐝 🦋 🐞 🐢 🐍 🦖 🦕 🐙 🦑 🦀 🐠 🐬 🐳 🦈 🐊 🦒 🐘 🦓 🦔 🐿️',
+  Space:'🚀 🛸 🌍 🌎 🌏 🌙 🌞 ⭐ 🌟 ✨ ☄️ 🪐 🌌 👩‍🚀 👨‍🚀 🔭 🛰️ 🌠 👽 🌑',
+  Nature:'🌸 🌻 🌷 🌹 🌼 🍀 🌿 🌳 🌴 🌵 🍄 🍁 🌈 ☀️ ⛅ 🌧️ ⚡ ❄️ ⛄ 🔥 🌊 🌋 ⛰️ 💧 🌱 🐚',
+  Food:'🍎 🍌 🍓 🍉 🍇 🍒 🍍 🥕 🌽 🥦 🍕 🍔 🍟 🌭 🍩 🍪 🧁 🎂 🍦 🍭 🍫 🥞 🥛 🧃',
+  Play:'⚽ 🏀 🏈 ⚾ 🎾 🏐 🏓 🎨 🎭 🎸 🎹 🥁 🎮 🧩 🪁 🎈 🎉 🎁 🏆 🥇 🎯 🛹 🚲 🏰',
+  Things:'📚 ✏️ 🖍️ 📏 🔬 🧪 🧲 💡 🔋 ⚙️ 🤖 💻 📷 ⏰ 🗺️ 🧭 🚗 🚂 ✈️ 🚁 ⛵ 🏠 🏫 👑',
+  Faces:'😀 😃 😄 😁 😆 😂 🥰 😍 🤩 😎 🤓 🥳 😮 😲 🤔 😴 🤗 👋 👍 👏 🙌 💪 ❤️ 💖',
+  Signs:'⬅️ ➡️ ⬆️ ⬇️ ✅ ❌ ❓ ❗ 💯 🔴 🟠 🟡 🟢 🔵 🟣 1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣ 💬 💭',
+};
+for (const k in STICKERS) STICKERS[k] = STICKERS[k].split(' ');
+const IDEAS = [['Dinosaurs','dino','🦖'],['Outer Space','space','🚀'],['Ocean Animals','ocean','🐳'],['My Pet','pets','🐶'],['Unicorns','unicorn','🦄'],['Minibeasts','fairy','🐞'],['Volcanoes','hero','🌋'],['Robots','robot','🤖'],['Football','sports','⚽'],['Butterflies','fairy','🦋'],['Seasons','fairy','🍂'],['Sweets','candy','🍭'],['Superheroes','hero','🦸'],['My Family','pets','🏠']];
+/* Levels: each year group gets its own slides, words and editor. Only Year 1 is built so far. */
+const LEVELS = {
+  y1: {name:'Year 1', ages:'Ages 5–6', icon:'🐣', ready:true, simple:true, words:true, defaultStage:'sprout',
+       blurb:'A simpler editor with a word helper, picture clues and read-aloud. Pick the stage that matches how your child reads and writes today.',
+       stages:{
+         seed:  {stageName:'Starting out', stageIcon:'🌱', title:140, body:92, maxOpts:2, noKeyboard:true, autoNext:true,
+                 banks:['topic','Little words','Colours','Describe'],
+                 desc:'Just learning letters and sounds. One short sentence per slide, filled in by tapping picture words. No typing needed.'},
+         sprout:{stageName:'Getting going', stageIcon:'🌿', title:130, body:72, maxOpts:3,
+                 banks:['topic','Sentence','Describe','Colours','Feelings'],
+                 desc:'Reads simple words. Sentence starters with ____ gaps to fill in, with a word helper for spelling.'},
+         tree:  {stageName:'Writing on my own', stageIcon:'🌳', title:120, body:64, maxOpts:3, checklist:true,
+                 banks:['topic','Tricky words','Joining words','Describe','Feelings'],
+                 desc:'Writes short sentences. Question prompts instead of gaps, plus a checklist for capital letters, full stops and joining words.'},
+       }},
+  y2: {name:'Year 2', ages:'Ages 6–7', icon:'🐥', ready:false},
+  y34:{name:'Years 3–4', ages:'Ages 7–9', icon:'🦊', ready:false},
+  y56:{name:'Years 5–6', ages:'Ages 9–11', icon:'🦉', ready:false},
+};
+const WORD_BANK = {
+  Sentence:'I|my|is|it|has|can|like|love|and|because|the|a|see|they|have|are|very|so',
+  Describe:'big 🐘|small 🐭|fast 💨|slow 🐌|cute 🥰|funny 😂|scary 😱|soft ☁️|happy 😊|long 📏|tall 🦒|strong 💪|loud 📢|cool 😎',
+  Colours:'red 🔴|orange 🟠|yellow 🟡|green 🟢|blue 🔵|purple 🟣|pink 💗|brown 🟤|black ⚫|white ⚪',
+  Feelings:'happy 😊|sad 😢|excited 🤩|scared 😨|proud 🥇|silly 🤪',
+  'Little words':'I|a|is|it|the|my|like|can|see|has|and|big 🐘|so',
+  // Year 1 common exception words
+  'Tricky words':'the|said|was|they|are|were|he|she|we|me|you|your|my|by|here|there|where|come|some|one|once|friend|school|house|our|love|do|to|today|of|says|his|put|push|pull|full|ask|be|go|no|so',
+  'Joining words':'and|because|but|so|then|when|also',
+};
+const TOPIC_WORDS = {
+  Dinosaurs:'dinosaur 🦕|egg 🥚|teeth 🦷|roar 🦖|tail|long ago|bones 🦴|claws|big 🐘',
+  'Outer Space':'rocket 🚀|moon 🌙|star ⭐|planet 🪐|Earth 🌍|sun ☀️|astronaut 👩‍🚀|fly|alien 👽',
+  'Ocean Animals':'fish 🐠|shark 🦈|whale 🐳|octopus 🐙|swim|sea 🌊|crab 🦀|fins|shell 🐚',
+  'My Pet':'dog 🐶|cat 🐱|fur|paws 🐾|play|walk|food 🦴|bed|cuddle 🤗',
+  Unicorns:'unicorn 🦄|horn|rainbow 🌈|magic ✨|sparkle|fly|wings|mane',
+  Volcanoes:'volcano 🌋|lava|hot 🔥|rock|smoke|mountain ⛰️|erupt|ash',
+  Robots:'robot 🤖|metal|battery 🔋|beep|build|move|lights 💡|buttons',
+  Football:'ball ⚽|goal|kick|team|run|score|win 🏆|play',
+  Butterflies:'butterfly 🦋|wings|flower 🌸|egg|caterpillar 🐛|fly|colours 🌈',
+  Sweets:'sweets 🍬|cake 🎂|chocolate 🍫|sweet|yummy 😋|ice cream 🍦|sugar',
+  Superheroes:'hero 🦸|cape|strong 💪|fly|save|power ⚡|mask|brave',
+  'My Family':'mum|dad|brother|sister|baby 👶|nan|grandad|home 🏠|love ❤️',
+  Minibeasts:'bug 🐞|spider 🕷️|ant 🐜|bee 🐝|snail 🐌|worm 🪱|legs|wings|crawl|tiny',
+  Seasons:'spring 🌷|summer ☀️|autumn 🍂|winter ❄️|rain 🌧️|snow ⛄|leaves 🍁|hot 🔥|cold 🥶',
+  Sharks:'shark 🦈|fish 🐠|teeth 🦷|fins|swim|sea 🌊|fast 💨|gills|bones 🦴',
+};
+const parseWord = s => { const m = s.match(/^(.+?)\s*((?:\p{Extended_Pictographic}|️|‍)+)?$/u); return {word:m ? m[1] : s, pic:(m && m[2]) || ''}; };
+const TIPS_Y1 = [
+  'Tap words two times to write.',
+  'Tap a word in the Word helper to add it.',
+  'Fill in the ____ lines with your own words.',
+  'Drag the pink dot to make things bigger.',
+  'Tap 🔈 to hear the words.',
+  'Make a sticker dance! Then press Show time.',
+  'Oops? Press ↶ to go back.',
+];
+const TIPS = [
+  'Tap words once to pick them, then tap again to type.',
+  'Drag the pink dot to make things bigger or smaller.',
+  'Drag the purple ↻ dot to turn things around.',
+  'Give stickers a dance! They move when you press Show time.',
+  'Try a Quiz slide. Your audience can tap the answers!',
+  'Drag slides in the list to change their order.',
+  'You can drop a picture right onto your slide.',
+  'Made a mistake? Press ↶ to go back.',
+  'Write what you will say in the Notes box. Only you can see it.',
+];
+
+/* ---------- element + slide makers ---------- */
+const T = o => Object.assign({id:uid(), type:'text', role:'body', x:200, y:200, w:1200, size:60, text:'', align:'center', bold:true, style:'none', font:null, color:null, rot:0, anim:'none'}, o);
+const S = (emoji, x, y, w, anim = 'none') => ({id:uid(), type:'sticker', emoji, x, y, w, h:w, rot:0, anim});
+const IMG = o => Object.assign({id:uid(), type:'image', src:'', x:0, y:0, w:600, h:450, frame:'frame', rot:0, anim:'none'}, o);
+const SHP = o => Object.assign({id:uid(), type:'shape', shape:'star', color:'#facc15', x:0, y:0, w:240, h:240, rot:0, anim:'none'}, o);
+const Q = o => Object.assign({id:uid(), type:'quiz', x:200, y:220, w:1200, size:58, question:'', options:['','',''], correct:0, rot:0, anim:'none'}, o);
+const SL = (els, o = {}) => Object.assign({id:uid(), els, bg:null, deco:true, transition:'pop', drawing:null, notes:''}, o);
+
+function L(key, th, d = {}){
+  const t = THEMES[th] || THEMES.space;
+  switch (key){
+    case 'title': return SL([
+      T({role:'title', x:150, y:170, w:1300, size:150, text:d.title || 'My Presentation'}),
+      T({x:300, y:570, w:1000, size:64, bold:false, text:d.sub || 'By me!'}),
+      S(d.icon || t.icon, 1330, 640, 180, 'bounce')], {transition:'zoom'});
+    case 'words': return SL([
+      T({role:'title', x:120, y:70, w:1360, size:100, text:d.title || 'Tell me more'}),
+      T({x:170, y:270, w:1260, size:56, align:'left', style:'card', bold:false, text:d.body || 'Write your words here.\nYou can add more lines!'})]);
+    case 'picture': return SL([
+      T({role:'title', x:120, y:60, w:1360, size:92, text:d.title || 'Look at this!'}),
+      IMG({x:130, y:230, w:720, h:540, rot:-2}),
+      T({x:930, y:300, w:560, size:52, align:'left', bold:false, text:d.body || 'This picture shows…'})]);
+    case 'facts': {
+      const f = d.facts || ['Write a cool fact!', 'Write another fact!', 'One more fact!'];
+      return SL([T({role:'title', x:120, y:60, w:1360, size:100, text:d.title || '3 Cool Facts'}),
+        ...f.flatMap((txt, i) => [S(['1️⃣','2️⃣','3️⃣'][i], 245 + i*500, 225, 110, 'none'), T({x:110 + i*500, y:360, w:380, size:44, style:'card', bold:false, text:txt})])]);
+    }
+    case 'bignum': return SL([
+      T({role:'title', x:150, y:80, w:1300, size:100, text:d.title || 'Did you know?'}),
+      T({role:'title', x:150, y:230, w:1300, size:260, style:'outline', text:d.big || '100'}),
+      T({x:250, y:600, w:1100, size:56, bold:false, text:d.body || 'Write a surprising fact about this number.'}),
+      S('🤯', 1340, 80, 140, 'wiggle')]);
+    case 'quiz': return SL([
+      T({role:'title', x:150, y:50, w:1300, size:100, text:'Quiz Time!'}),
+      Q({question:d.q || 'Type your question here?', options:d.opts || ['Answer one','Answer two','Answer three'], correct:d.correct || 0}),
+      S('🤔', 1380, 60, 140, 'wiggle')]);
+    case 'end': return SL([
+      T({role:'title', x:150, y:170, w:1300, size:190, text:'The End!'}),
+      T({x:250, y:470, w:1100, size:64, bold:false, text:d.body || 'Thank you for watching!\nAny questions?'}),
+      S('👏', 260, 640, 150, 'bounce'), S('🎉', 1190, 630, 160, 'wiggle')], {transition:'spin'});
+    default: return SL([]);
+  }
+}
+const LAYOUTS = [['title','Title'],['words','Words'],['picture','Picture'],['facts','3 Facts'],['bignum','Big fact'],['quiz','Quiz'],['end','The End'],['blank','Blank']];
+
+/* Year 1: few words per slide and big letters. The stage sets how much help the writing gets:
+   seed = one short sentence with a gap, sprout = sentence starters with gaps, tree = question prompts to answer in their own words. */
+function L1(key, th, d = {}){
+  const t = THEMES[th] || THEMES.space;
+  const st = d.stage || 'sprout';
+  const seed = st === 'seed', tree = st === 'tree';
+  const bodySize = seed ? 92 : tree ? 64 : 76;
+  const pick = (a, b, c) => seed ? a : tree ? c : b;
+  switch (key){
+    case 'title': return SL([
+      T({role:'title', x:150, y:170, w:1300, size:160, text:d.title || 'My Presentation'}),
+      T({x:300, y:590, w:1000, size:72, bold:false, text:d.sub || 'By ____'}),
+      S(d.icon || t.icon, 1330, 640, 190, 'bounce')], {transition:'zoom'});
+    case 'look': return SL([
+      T({role:'title', x:120, y:60, w:1360, size:110, text:d.title || pick('Look!', 'Look!', 'What is it?')}),
+      ...(d.sticker ? [S(d.sticker, 230, 250, 440, 'float')] : [IMG({x:150, y:220, w:640, h:480, rot:-2})]),
+      T({x:860, y:300, w:620, size:bodySize, align:'left', text:d.body ?? pick('This is a ____.', 'This is a ____.', ''),
+         ph:'Write what it is. Where does it live or where can you find it?'})]);
+    case 'describe': return SL([
+      T({role:'title', x:120, y:60, w:1360, size:110, text:d.title || 'What is it like?'}),
+      T({x:220, y:260, w:1160, size:bodySize, style:'card', align:'left', bold:false,
+         text:d.body ?? pick('It is ____.', 'It is ____.\nIt has ____.\nIt can ____.', ''),
+         ph:'Write 2 sentences about what it looks like or what it can do. Join two ideas with "and".'}),
+      S(d.icon || '🔍', 1340, 660, 170, 'wiggle')]);
+    case 'like': return SL([
+      T({role:'title', x:120, y:60, w:1360, size:110, text:d.title || 'Why I like it'}),
+      S('❤️', 140, 320, 220, 'pulse'),
+      T({x:420, y:320, w:1060, size:bodySize, align:'left', style:'card', bold:false,
+         text:d.body ?? pick('I like it. It is ____.', 'I like it because ____.', ''),
+         ph:'Why do you like it? Use the word "because".'})]);
+    case 'wow': return SL([
+      T({role:'title', x:150, y:90, w:1300, size:190, style:'outline', text:'Wow!'}),
+      T({x:250, y:400, w:1100, size:bodySize, style:'card', bold:false,
+         text:d.body ?? pick('It is so ____!', 'Did you know? ____', ''),
+         ph:'Write an amazing fact you found out.'}),
+      S('🤩', 1300, 650, 170, 'bounce'), S('✨', 180, 660, 130, 'spin')]);
+    case 'quiz': return SL([
+      T({role:'title', x:150, y:50, w:1300, size:110, text:'Can you guess?'}),
+      Q({x:250, y:250, w:1100, size:72, question:d.q || pick('Is it ____?', 'Is it ____?', 'Type your question?'),
+         options:d.opts || (tree ? ['Answer 1', 'Answer 2', 'Answer 3'] : ['Yes 👍', 'No 👎']), correct:d.correct || 0}),
+      S('🤔', 1380, 60, 140, 'wiggle')]);
+    case 'end': return SL([
+      T({role:'title', x:150, y:170, w:1300, size:200, text:'The End!'}),
+      T({x:250, y:490, w:1100, size:76, bold:false, text:d.body || 'Thank you for watching!'}),
+      S('👏', 260, 640, 150, 'bounce'), S('🎉', 1190, 630, 160, 'wiggle')], {transition:'spin'});
+    default: return SL([]);
+  }
+}
+const LAYOUTS_Y1 = [['title','Title'],['look','Look at this'],['describe','What is it like?'],['like','Why I like it'],['wow','Wow fact'],['quiz','Guess game'],['end','The End'],['blank','Blank']];
+LEVELS.y1.layout = L1; LEVELS.y1.layouts = LAYOUTS_Y1;
+
+function sampleProject(){
+  const th = 'ocean';
+  return {id:uid(), title:'All About Sharks (example)', theme:th, topic:'Sharks', level:'y1', stage:'sprout', slides:[
+    L1('title', th, {title:'All About Sharks', sub:'By Sam', icon:'🦈'}),
+    L1('look', th, {sticker:'🦈', body:'This is a shark. It lives in the sea.'}),
+    L1('describe', th, {title:'What is it like?', body:'It is big and fast.\nIt has lots of teeth.\nIt can swim all day.', icon:'🦷'}),
+    L1('like', th, {body:'I like sharks because they are so cool!'}),
+    L1('wow', th, {body:'Did you know? Sharks have no bones!'}),
+    L1('quiz', th, {q:'Is a shark a fish?', opts:['Yes 👍','No 👎'], correct:0}),
+    L1('end', th),
+  ]};
+}
+function starterProject(topic, name, th, lvl = 'y1', stage = 'sprout'){
+  const title = topic ? `All About ${topic}` : 'My Presentation';
+  const lay = LEVELS[lvl].layout || L;
+  const like = stage === 'sprout' && topic ? {body:`I like ${topic.toLowerCase()} because ____.`} : {};
+  const keys = stage === 'seed' ? ['look', 'describe', 'like', 'quiz'] : ['look', 'describe', 'like', 'wow', 'quiz'];
+  return {id:uid(), title, theme:th, topic, level:lvl, stage, slides:[
+    lay('title', th, {title, sub: name ? `By ${name}` : 'By ____', stage}),
+    ...keys.map(k => lay(k, th, k === 'like' ? {...like, stage} : {stage})),
+    lay('end', th, {stage}),
+  ]};
+}
+
+/* ---------- storage ---------- */
+const IDX = 'mypresso.index', PK = 'mypresso.p.', CUR = 'mypresso.current';
+const lsGet = k => { try { return localStorage.getItem(k); } catch(e){ return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); return true; } catch(e){ return false; } };
+const lsDel = k => { try { localStorage.removeItem(k); } catch(e){} };
+const loadIndex = () => { try { return JSON.parse(lsGet(IDX)) || []; } catch(e){ return []; } };
+const loadProject = id => { try { return JSON.parse(lsGet(PK + id)); } catch(e){ return null; } };
+// A stand-in used only when every show has been deleted; it is never saved
+const emptyProject = () => ({id:uid(), title:'My Presentation', theme:'space', level:'y1', slides:[SL([])], temp:true});
+function saveNow(){
+  if (project.temp) return;
+  project.updated = Date.now();
+  const ok = lsSet(PK + project.id, JSON.stringify(project));
+  const idx = loadIndex().filter(p => p.id !== project.id);
+  idx.unshift({id:project.id, title:project.title, theme:project.theme, updated:project.updated});
+  lsSet(IDX, JSON.stringify(idx));
+  lsSet(CUR, project.id);
+  if (!ok) toast('Saving space is full. Try smaller pictures, or delete an old show.');
+}
+let saveTimer = 0;
+const scheduleSave = () => { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 300); };
+
+/* ---------- state + history ---------- */
+let project, cur = 0, selId = null, editingId = null, mode = 'select', scale = .5, slideEl = null;
+let undoStack = [], redoStack = [], lastState = '';
+let soundOn = lsGet('mypresso.sound') !== 'off';
+const theme = () => THEMES[project.theme] || THEMES.space;
+// The level's settings with the chosen stage's settings laid on top
+function levelOf(lk, sk){
+  const l = LEVELS[lk] || LEVELS.y1;
+  if (!l.stages) return l;
+  const key = l.stages[sk] ? sk : l.defaultStage;
+  return {...l, ...l.stages[key], stage:key};
+}
+const level = () => levelOf(project.level, project.stage);
+const makeLayout = (k, th) => (level().layout || L)(k, th, {stage:level().stage});
+const curSlide = () => project.slides[cur];
+const findEl = id => curSlide().els.find(e => e.id === id);
+const selEl = () => selId ? findEl(selId) : null;
+
+function resetHistory(){ undoStack = []; redoStack = []; lastState = JSON.stringify(project); updateUndoBtns(); }
+function commit(){
+  const s = JSON.stringify(project);
+  if (s === lastState) return;
+  undoStack.push(lastState); if (undoStack.length > 40) undoStack.shift();
+  redoStack = []; lastState = s;
+  scheduleSave(); scheduleThumbs(); updateUndoBtns();
+}
+function restore(){
+  stopDraw(true);
+  project = JSON.parse(lastState); cur = Math.min(cur, project.slides.length - 1);
+  selId = null; editingId = null; scheduleSave(); renderAll(); updateUndoBtns();
+}
+function undo(){ if (!undoStack.length) return; stopEditing(); redoStack.push(lastState); lastState = undoStack.pop(); restore(); sfx('pop'); }
+function redo(){ if (!redoStack.length) return; undoStack.push(lastState); lastState = redoStack.pop(); restore(); sfx('pop'); }
+function updateUndoBtns(){ $('#btnUndo').disabled = !undoStack.length; $('#btnRedo').disabled = !redoStack.length; }
+
+/* ---------- rendering a slide ---------- */
+const fontStack = f => `'${f}', 'Fredoka', 'Comic Sans MS', system-ui, sans-serif`;
+const DECO_SPOTS = [[2,4,110,-12],[88,3,90,14],[3,78,95,10],[89,76,120,-8],[47,89,70,6],[95,42,64,-20],[1,42,60,18]];
+const hash = s => [...String(s)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+function shapeHTML(shape, color){
+  if (shape === 'circle') return `<div class="shp" style="background:${color};border-radius:50%"></div>`;
+  if (shape === 'rect') return `<div class="shp" style="background:${color};border-radius:28px"></div>`;
+  const P = {
+    star:'<polygon points="50,3 61,37 97,37 68,59 79,95 50,73 21,95 32,59 3,37 39,37"/>',
+    heart:'<path d="M50 92 C20 70 2 52 2 30 C2 14 14 4 28 4 C38 4 46 10 50 18 C54 10 62 4 72 4 C86 4 98 14 98 30 C98 52 80 70 50 92Z"/>',
+    cloud:'<path d="M25 80 C10 80 2 70 2 58 C2 46 12 38 24 39 C26 24 38 14 52 14 C66 14 77 23 80 36 C92 36 98 46 98 57 C98 70 90 80 76 80 Z"/>',
+    bubble:'<path d="M10 5 H90 Q97 5 97 12 V62 Q97 69 90 69 H40 L22 92 L26 69 H10 Q3 69 3 62 V12 Q3 5 10 5Z"/>',
+    arrow:'<path d="M2 35 H60 V12 L98 50 L60 88 V65 H2Z"/>',
+  };
+  return `<div class="shp"><svg viewBox="0 0 100 100" preserveAspectRatio="none" fill="${color}">${P[shape] || P.star}</svg></div>`;
+}
+function buildSlide(slide, t, opts = {}){
+  const el = document.createElement('div');
+  el.className = 'slide' + (opts.edit ? ' edit' : '') + (opts.present ? ' showing' : '');
+  el.style.background = slide.bg || t.bg;
+  el.style.color = t.ink;
+  el.style.setProperty('--oc', t.outline);
+  if (slide.deco !== false){
+    const d = document.createElement('div'); d.className = 'deco';
+    const h = hash(slide.id);
+    DECO_SPOTS.forEach((s, i) => {
+      const sp = document.createElement('span');
+      sp.textContent = t.deco[(i + h) % t.deco.length];
+      sp.style.cssText = `left:${s[0]}%;top:${s[1]}%;font-size:${s[2]}px;--r:${s[3]}deg`;
+      d.appendChild(sp);
+    });
+    el.appendChild(d);
+  }
+  if (slide.drawing){
+    const img = new Image(); img.src = slide.drawing; img.className = 'drawing'; img.alt = ''; img.draggable = false;
+    el.appendChild(img);
+  }
+  slide.els.forEach((e, i) => el.appendChild(buildEl(e, t, opts, i)));
+  return el;
+}
+function buildEl(e, t, opts = {}, i = 0){
+  const el = document.createElement('div');
+  el.className = 'el el-' + e.type; el.dataset.id = e.id;
+  el.style.left = e.x + 'px'; el.style.top = e.y + 'px'; el.style.width = e.w + 'px';
+  if (e.type !== 'text' && e.type !== 'quiz') el.style.height = e.h + 'px';
+  if (e.rot) el.style.transform = `rotate(${e.rot}deg)`;
+  const pop = document.createElement('div'); pop.className = 'pop';
+  if (opts.present){ pop.classList.add('pop-in'); pop.style.animationDelay = (0.35 + i * 0.16).toFixed(2) + 's'; }
+  const inner = document.createElement('div'); inner.className = 'inner';
+  if (opts.present && e.anim && e.anim !== 'none') inner.classList.add('dance-' + e.anim);
+  pop.appendChild(inner); el.appendChild(pop);
+
+  if (e.type === 'text'){
+    const font = e.font || (e.role === 'title' ? t.font : t.body);
+    inner.classList.add('txt', 'tstyle-' + (e.style || 'none'));
+    inner.style.fontFamily = fontStack(font);
+    inner.style.fontSize = e.size + 'px';
+    inner.style.color = e.color || (e.role === 'title' ? t.title : t.ink);
+    inner.style.textAlign = e.align || 'center';
+    inner.style.fontWeight = (e.bold && !ONE_WEIGHT.has(font)) ? 700 : 400;
+    if (e.style === 'card') inner.style.background = t.card;
+    inner.textContent = e.text;
+    if (!e.text && opts.edit){ inner.classList.add('empty'); inner.dataset.ph = e.ph ? '✏️ ' + e.ph : 'Type here'; if (e.ph) inner.classList.add('prompt'); }
+    if (!e.text && !opts.edit) el.style.visibility = 'hidden';
+  } else if (e.type === 'sticker'){
+    inner.classList.add('stk');
+    inner.style.fontSize = (e.w * 0.82) + 'px';
+    inner.textContent = e.emoji;
+  } else if (e.type === 'image'){
+    if (e.src){
+      inner.innerHTML = `<div class="imgbox frame-${e.frame || 'none'}"><img alt="" draggable="false"></div>`;
+      inner.querySelector('img').src = e.src;
+    } else if (opts.present){
+      inner.innerHTML = '';
+    } else {
+      inner.innerHTML = `<div class="img-ph">📷 Add a picture<small>tap here</small></div>`;
+    }
+  } else if (e.type === 'shape'){
+    inner.innerHTML = shapeHTML(e.shape, e.color);
+  } else if (e.type === 'quiz'){
+    inner.classList.add('quiz');
+    inner.innerHTML = `<div class="q-q" style="font-size:${e.size * 1.05}px;font-family:${esc(fontStack(t.font))};color:${t.title}">${esc(e.question)}</div>`
+      + `<div class="q-opts">${e.options.map((o, k) => `<button class="q-opt" data-i="${k}" tabindex="-1" style="font-size:${e.size * .8}px;background:${QCOL[k % 4]}">${esc(o)}</button>`).join('')}</div>`;
+  }
+  return el;
+}
+
+/* ---------- editor rendering ---------- */
+const stage = $('#stage'), stageWrap = $('#stageWrap'), thumbs = $('#thumbs'), insp = $('#inspector'), drawer = $('#drawer');
+function renderAll(){
+  $('#titleInput').value = project.title;
+  $('#themeName').textContent = theme().name;
+  $('#btnSound').textContent = soundOn ? '🔊' : '🔇';
+  $('#levelName').textContent = level().name + (level().stageIcon ? ' ' + level().stageIcon : '');
+  $('#levelIcon').textContent = level().icon;
+  $('#btnLevel').title = level().stageName ? `${level().name}: ${level().stageName}` : level().name;
+  document.body.classList.toggle('simple', !!level().simple);
+  showTip();
+  renderThumbs(); renderStage(); renderInspector();
+}
+function renderStage(){
+  stage.innerHTML = '';
+  slideEl = buildSlide(curSlide(), theme(), {edit:true});
+  stage.appendChild(slideEl);
+  fitStage(); updateSelectionUI();
+  if (mode === 'draw') mountDrawLayer();
+}
+function fitStage(){
+  const cw = stageWrap.clientWidth, ch = stageWrap.clientHeight;
+  const narrow = matchMedia('(max-width: 900px)').matches;
+  let s = cw / W; if (!narrow && ch > 50) s = Math.min(s, (ch - 10) / H);
+  scale = Math.max(.08, s);
+  stage.style.width = Math.floor(W * scale) + 'px'; stage.style.height = Math.floor(H * scale) + 'px';
+  if (slideEl){ slideEl.style.transform = `scale(${scale})`; slideEl.style.setProperty('--inv', 1 / scale); }
+}
+new ResizeObserver(fitStage).observe(stageWrap);
+
+function updateSelectionUI(){
+  if (!slideEl) return;
+  slideEl.querySelectorAll('.el.sel').forEach(n => { n.classList.remove('sel', 'editing'); n.querySelectorAll('.h').forEach(h => h.remove()); });
+  if (!selId) return;
+  const n = slideEl.querySelector(`.el[data-id="${selId}"]`);
+  if (!n) return;
+  n.classList.add('sel');
+  if (editingId === selId) n.classList.add('editing');
+  n.insertAdjacentHTML('beforeend', '<div class="h h-rot" title="Turn">↻</div><div class="h h-resize" title="Make bigger or smaller"></div>');
+}
+function replaceEl(m){
+  const old = slideEl && slideEl.querySelector(`.el[data-id="${m.id}"]`);
+  if (!old) return;
+  old.replaceWith(buildEl(m, theme(), {edit:true}));
+  updateSelectionUI();
+}
+function select(id){
+  if (editingId && editingId !== id) stopEditing();
+  selId = id; updateSelectionUI(); renderInspector();
+}
+
+let thumbTimer = 0;
+const scheduleThumbs = () => { clearTimeout(thumbTimer); thumbTimer = setTimeout(renderThumbs, 120); };
+function renderThumbs(){
+  const t = theme(); thumbs.innerHTML = '';
+  project.slides.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'thumb' + (i === cur ? ' on' : ''); b.dataset.i = i; b.draggable = true;
+    b.setAttribute('aria-label', 'Slide ' + (i + 1));
+    const num = document.createElement('span'); num.className = 'tnum'; num.textContent = i + 1;
+    const box = document.createElement('div'); box.className = 'tbox';
+    const sd = buildSlide(s, t); sd.style.transform = `scale(${TW / W})`; box.appendChild(sd);
+    b.append(num, box); thumbs.appendChild(b);
+  });
+  const on = thumbs.querySelector('.thumb.on');
+  if (on) on.scrollIntoView({block:'nearest', inline:'nearest'});
+}
+function goSlide(i){
+  stopEditing(); stopDraw();
+  cur = clamp(i, 0, project.slides.length - 1); selId = null;
+  thumbs.querySelectorAll('.thumb').forEach(b => b.classList.toggle('on', +b.dataset.i === cur));
+  renderStage(); renderInspector();
+}
+thumbs.addEventListener('click', e => { const b = e.target.closest('.thumb'); if (b) goSlide(+b.dataset.i); });
+let dragFrom = -1;
+thumbs.addEventListener('dragstart', e => { const b = e.target.closest('.thumb'); if (!b) return; dragFrom = +b.dataset.i; e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', 'slide'); } catch(_){} });
+thumbs.addEventListener('dragover', e => { if (dragFrom < 0) return; e.preventDefault(); thumbs.querySelectorAll('.drag-over').forEach(n => n.classList.remove('drag-over')); const b = e.target.closest('.thumb'); if (b) b.classList.add('drag-over'); });
+thumbs.addEventListener('drop', e => {
+  e.preventDefault(); const b = e.target.closest('.thumb');
+  if (b && dragFrom >= 0){ const to = +b.dataset.i; if (to !== dragFrom){ const [s] = project.slides.splice(dragFrom, 1); project.slides.splice(to, 0, s); cur = to; commit(); renderAll(); sfx('pop'); } }
+  dragFrom = -1;
+});
+thumbs.addEventListener('dragend', () => { dragFrom = -1; thumbs.querySelectorAll('.drag-over').forEach(n => n.classList.remove('drag-over')); });
+
+/* ---------- pointer interactions on the stage ---------- */
+stageWrap.addEventListener('pointerdown', e => {
+  if (mode === 'draw') return;
+  const elDom = e.target.closest('.el');
+  if (editingId && elDom && elDom.dataset.id === editingId) return;
+  if (editingId) stopEditing();
+  if (!elDom || !stage.contains(elDom)){ if (selId) select(null); return; }
+  const m = findEl(elDom.dataset.id); if (!m) return;
+  e.preventDefault();
+  const wasSelected = selId === m.id;
+  if (!wasSelected) select(m.id);
+  const handle = e.target.closest('.h');
+  const kind = handle ? (handle.classList.contains('h-rot') ? 'rot' : 'resize') : 'move';
+  const st = {x:e.clientX, y:e.clientY, mx:m.x, my:m.y, mw:m.w, mh:m.h, size:m.size};
+  const r = slideEl.querySelector(`.el[data-id="${m.id}"]`).getBoundingClientRect();
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  let moved = false;
+  const move = ev => {
+    const dx = (ev.clientX - st.x) / scale, dy = (ev.clientY - st.y) / scale;
+    if (!moved && Math.hypot(ev.clientX - st.x, ev.clientY - st.y) < 4) return;
+    moved = true;
+    const dom = slideEl.querySelector(`.el[data-id="${m.id}"]`);
+    if (kind === 'move'){
+      m.x = Math.round(clamp(st.mx + dx, -m.w + 60, W - 60));
+      m.y = Math.round(clamp(st.my + dy, -200, H - 60));
+      dom.style.left = m.x + 'px'; dom.style.top = m.y + 'px';
+    } else if (kind === 'rot'){
+      let a = Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI + 90;
+      a = ((a + 540) % 360) - 180;
+      for (const snap of [-180, -90, 0, 90, 180]) if (Math.abs(a - snap) < 6) a = snap;
+      m.rot = Math.round(a);
+      dom.style.transform = m.rot ? `rotate(${m.rot}deg)` : '';
+    } else {
+      if (m.type === 'text' || m.type === 'quiz'){
+        const nw = Math.max(120, st.mw + dx); const k = nw / st.mw;
+        m.w = Math.round(nw); m.size = clamp(Math.round(st.size * k), 14, 420);
+      } else if (m.type === 'sticker'){
+        const d = Math.max(dx, dy); m.w = m.h = Math.round(clamp(st.mw + d, 40, 900));
+      } else if (m.type === 'image'){
+        const nw = clamp(st.mw + dx, 80, 1600); m.w = Math.round(nw); m.h = Math.round(nw * st.mh / st.mw);
+      } else {
+        m.w = Math.round(Math.max(40, st.mw + dx));
+        m.h = Math.round(ev.shiftKey ? m.w * st.mh / st.mw : Math.max(40, st.mh + dy));
+      }
+      replaceEl(m);
+    }
+  };
+  const up = () => {
+    window.removeEventListener('pointermove', move);
+    window.removeEventListener('pointerup', up);
+    window.removeEventListener('pointercancel', up);
+    if (moved){ commit(); if (kind === 'resize') renderInspector(); return; }
+    if (kind !== 'move') return;
+    if (m.type === 'image' && !m.src){ pendingImg = m.id; fileInput.click(); }
+    else if (wasSelected && m.type === 'text') startEditing(m.id);
+    else if (wasSelected && m.type === 'quiz'){ const q = $('#qQuestion'); if (q){ q.focus(); q.select(); } }
+  };
+  window.addEventListener('pointermove', move);
+  window.addEventListener('pointerup', up);
+  window.addEventListener('pointercancel', up);
+});
+
+function startEditing(id){
+  const host = slideEl.querySelector(`.el[data-id="${id}"]`); if (!host) return;
+  const dom = host.querySelector('.txt'); if (!dom) return;
+  editingId = id; selId = id; updateSelectionUI();
+  dom.classList.remove('empty', 'prompt');
+  // Starting-out stage: fill gaps by tapping words, so keep the tablet keyboard out of the way
+  if (level().noKeyboard && !forceKeyboard) dom.inputMode = 'none';
+  checkedAll = false;
+  dom.addEventListener('input', updateChecklist);
+  dom.contentEditable = 'plaintext-only';
+  if (dom.contentEditable !== 'plaintext-only') dom.contentEditable = 'true';
+  dom.focus();
+  if (!selectBlank(dom)){
+    const range = document.createRange(); range.selectNodeContents(dom);
+    const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
+  }
+  if (level().words){ if (drawerKind === 'draw') stopDraw(true); drawerKind = 'words'; renderDrawer(); }
+  dom.addEventListener('blur', stopEditing, {once:true});
+  dom.addEventListener('keydown', ev => { ev.stopPropagation(); if (ev.key === 'Escape'){ ev.preventDefault(); dom.blur(); } });
+  dom.addEventListener('paste', ev => { ev.preventDefault(); const txt = (ev.clipboardData || window.clipboardData).getData('text/plain'); document.execCommand('insertText', false, txt); });
+}
+function stopEditing(){
+  if (!editingId) return;
+  const id = editingId; editingId = null;
+  const m = findEl(id);
+  const dom = slideEl && slideEl.querySelector(`.el[data-id="${id}"] .txt`);
+  if (m && dom){ m.text = dom.innerText.replace(/\n+$/, ''); }
+  if (m){ replaceEl(m); commit(); }
+  if (drawerKind === 'words') closeDrawer();
+}
+/* Select the next ____ blank after the caret (wrapping round), so typing fills it in. */
+function selectBlank(dom, fromCaret){
+  const txt = dom.firstChild;
+  if (!txt || txt.nodeType !== 3 || dom.childNodes.length !== 1) return false;
+  const re = /_{2,}/g;
+  let start = 0;
+  if (fromCaret){ const s = getSelection(); if (s.rangeCount && s.focusNode === txt) start = Math.max(s.anchorOffset, s.focusOffset); }
+  re.lastIndex = start;
+  let mm = re.exec(txt.data);
+  if (!mm){ re.lastIndex = 0; mm = re.exec(txt.data); }
+  if (!mm) return false;
+  const r = document.createRange(); r.setStart(txt, mm.index); r.setEnd(txt, mm.index + mm[0].length);
+  const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+  return true;
+}
+const editingDom = () => editingId && slideEl ? slideEl.querySelector(`.el[data-id="${editingId}"] .txt`) : null;
+function insertWord(w){
+  const dom = editingDom(); if (!dom) return;
+  if (document.activeElement !== dom) dom.focus();
+  const s = getSelection();
+  if (!s.rangeCount || !dom.contains(s.anchorNode)){ const r = document.createRange(); r.selectNodeContents(dom); r.collapse(false); s.removeAllRanges(); s.addRange(r); }
+  const r = s.getRangeAt(0);
+  const before = r.startContainer.nodeType === 3 ? r.startContainer.data.slice(0, r.startOffset) : '';
+  const after = r.endContainer.nodeType === 3 ? r.endContainer.data.slice(r.endOffset) : '';
+  const pre = before && !/\s$/.test(before) ? ' ' : '';
+  const post = /^[\s.,!?]/.test(after) ? '' : ' ';
+  document.execCommand('insertText', false, pre + w + post);
+  sfx('pop');
+  updateChecklist();
+  if (level().autoNext){
+    // Jump to the next gap; once every gap is filled, read the finished sentence back
+    if (/_{2,}/.test(dom.innerText)) { say(w); selectBlank(dom, true); }
+    else setTimeout(() => say(dom.innerText), 350);
+  } else say(w);
+}
+/* Year 1 writing checklist: capital letters, full stops and a joining word */
+let checkedAll = false;
+function checkWriting(text){
+  const sentences = text.replace(/_{2,}/g, '').split(/(?<=[.!?])\s+|\n+/).map(s => s.replace(/[^\p{L}\p{N}.!?'"]+$/u, '').trim()).filter(s => /\p{L}/u.test(s));
+  const firstLetter = s => (s.match(/\p{L}/u) || [''])[0];
+  return {
+    capital: sentences.length > 0 && sentences.every(s => { const c = firstLetter(s); return c && c === c.toUpperCase(); }),
+    stop: sentences.length > 0 && sentences.every(s => /[.!?]$/.test(s)),
+    join: /\b(and|because|but|so|then|when)\b/i.test(text),
+  };
+}
+function updateChecklist(){
+  const box = $('#checklist'), dom = editingDom();
+  if (!box || !dom) return;
+  const c = checkWriting(dom.innerText);
+  box.querySelectorAll('[data-check]').forEach(n => n.classList.toggle('done', c[n.dataset.check]));
+  if (c.capital && c.stop && c.join && !checkedAll){
+    checkedAll = true; sfx('cheer');
+    const r = box.getBoundingClientRect(); confetti(r.left + r.width / 2, r.top, 60);
+  }
+}
+function say(text){
+  if (!('speechSynthesis' in window)) return;
+  const clean = String(text).replace(/_{2,}/g, ' blank ').replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, '').trim();
+  if (!clean) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(clean); u.rate = .85; u.pitch = 1.1; speechSynthesis.speak(u); } catch(_){}
+}
+
+/* ---------- adding things ---------- */
+function addEl(m, opts = {}){
+  curSlide().els.push(m);
+  slideEl.appendChild(buildEl(m, theme(), {edit:true}));
+  select(m.id); commit(); sfx('pop');
+  if (opts.edit) startEditing(m.id);
+}
+const jitter = () => Math.round((Math.random() - .5) * 160);
+function addSticker(emoji){ addEl(S(emoji, W/2 - 90 + jitter(), H/2 - 90 + jitter(), 180)); }
+function addShape(shape){ addEl(SHP({shape, color:shapeColor, x:W/2 - 130 + jitter(), y:H/2 - 130 + jitter(), w: shape === 'arrow' || shape === 'bubble' || shape === 'cloud' ? 340 : 260, h:260})); }
+function addImage(src, iw, ih){
+  let w = Math.min(720, iw), h = w * ih / iw;
+  if (h > 560){ h = 560; w = h * iw / ih; }
+  addEl(IMG({src, w:Math.round(w), h:Math.round(h), x:Math.round(W/2 - w/2), y:Math.round(H/2 - h/2), frame:'frame'}));
+}
+let pendingImg = null;
+const fileInput = $('#fileInput');
+fileInput.addEventListener('change', () => {
+  const f = fileInput.files[0]; fileInput.value = '';
+  if (f) useImageFile(f); else pendingImg = null;
+});
+function useImageFile(file){
+  if (!file.type.startsWith('image/')){ toast('That file is not a picture. Try a photo or drawing.'); return; }
+  loadImageFile(file, (src, iw, ih) => {
+    const target = pendingImg && findEl(pendingImg); pendingImg = null;
+    if (target){
+      target.src = src;
+      target.h = Math.round(target.w * ih / iw);
+      if (target.h > 700){ target.h = 700; target.w = Math.round(700 * iw / ih); }
+      replaceEl(target); select(target.id); commit(); sfx('pop');
+    } else addImage(src, iw, ih);
+  });
+}
+function loadImageFile(file, cb){
+  const rd = new FileReader();
+  rd.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, 1200 / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      const png = file.type === 'image/png' || file.type === 'image/gif' || file.type === 'image/webp';
+      cb(c.toDataURL(png ? 'image/png' : 'image/jpeg', .85), c.width, c.height);
+    };
+    img.onerror = () => toast('Could not open that picture. Try a different one.');
+    img.src = rd.result;
+  };
+  rd.readAsDataURL(file);
+}
+stageWrap.addEventListener('dragover', e => { if (dragFrom >= 0) return; e.preventDefault(); stage.classList.add('drop'); });
+stageWrap.addEventListener('dragleave', () => stage.classList.remove('drop'));
+stageWrap.addEventListener('drop', e => { if (dragFrom >= 0) return; e.preventDefault(); stage.classList.remove('drop'); const f = e.dataTransfer.files && e.dataTransfer.files[0]; if (f) useImageFile(f); });
+document.addEventListener('paste', e => {
+  if (editingId || /INPUT|TEXTAREA/.test(document.activeElement?.tagName || '') || !$('#present').hidden || !homeEl.hidden) return;
+  const item = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'));
+  if (item){ e.preventDefault(); useImageFile(item.getAsFile()); }
+});
+
+/* ---------- toolstrip + drawer ---------- */
+let drawerKind = null, stickerTab = 'Animals', shapeColor = '#facc15';
+const drawOpts = {color:'#ef4444', size:14, eraser:false};
+$('#toolstrip').addEventListener('click', e => {
+  const b = e.target.closest('.tool'); if (!b) return;
+  const tool = b.dataset.tool;
+  stopEditing();
+  if (tool === 'title') addEl(T({role:'title', x:200, y:340 + jitter()/2, w:1200, size:level().title || 120, text:''}), {edit:true});
+  else if (tool === 'text') addEl(T({x:350, y:380 + jitter()/2, w:900, size:level().body || 60, bold:false, text:''}), {edit:true});
+  else if (tool === 'picture'){ pendingImg = null; fileInput.click(); }
+  else if (tool === 'quiz') addEl(level().simple
+    ? Q({x:250, y:300, w:1100, size:72, question:'Is it ____?', options:['Yes 👍','No 👎']})
+    : Q({question:'Type your question here?', options:['Answer one','Answer two','Answer three']}));
+  else toggleDrawer(tool);
+});
+function toggleDrawer(kind){
+  if (drawerKind === kind){ closeDrawer(); return; }
+  if (drawerKind === 'draw') stopDraw();
+  drawerKind = kind;
+  if (kind === 'draw') startDraw();
+  renderDrawer();
+}
+function closeDrawer(){ if (drawerKind === 'draw') stopDraw(); drawerKind = null; drawer.hidden = true; markTools(); }
+function markTools(){ document.querySelectorAll('.tool').forEach(t => t.classList.toggle('on', t.dataset.tool === drawerKind)); }
+function renderDrawer(){
+  markTools();
+  if (!drawerKind){ drawer.hidden = true; return; }
+  drawer.hidden = false;
+  let h = '<button class="btn icon sm drawer-x" data-dx aria-label="Close">✖</button>';
+  if (drawerKind === 'stickers'){
+    h += `<div class="tabs">${Object.keys(STICKERS).map(k => `<button class="tab${k === stickerTab ? ' on' : ''}" data-stab="${k}">${STICKERS[k][0]} ${k}</button>`).join('')}</div>`
+      + `<div class="emoji-grid">${STICKERS[stickerTab].map(e => `<button class="emo" data-emo="${e}" aria-label="Add ${e}">${e}</button>`).join('')}</div>`;
+  } else if (drawerKind === 'shapes'){
+    h += `<div class="drow"><span class="dlabel">Color</span><div class="sws">${COLORS.map(c => `<button class="sw${c === shapeColor ? ' on' : ''}" data-scolor="${c}" style="background:${c}" aria-label="Color ${c}"></button>`).join('')}</div></div>`
+      + `<div class="drow"><span class="dlabel">Shape</span>${SHAPES.map(s => `<button class="shape-btn" data-shape="${s}" aria-label="Add ${s}">${shapeHTML(s, shapeColor)}</button>`).join('')}</div>`;
+  } else if (drawerKind === 'words'){
+    const banks = wordBanks(), lv = level(), m = editingId && findEl(editingId);
+    if (!banks[wordTab]) wordTab = Object.keys(banks)[0];
+    const prompt = m && m.ph && lv.stage === 'tree' ? `<div class="wprompt">✏️ ${esc(m.ph)} <button class="chip" data-wsayp>🔈</button></div>` : '';
+    const hasGaps = m && /_{2,}/.test(m.text);
+    h = `${prompt}<div class="tabs"><span class="dlabel">📖 Word helper</span>${Object.keys(banks).map(k => `<button class="tab${k === wordTab ? ' on' : ''}" data-wtab="${esc(k)}">${esc(k)}</button>`).join('')}</div>
+      <div class="wgrid${lv.stage === 'seed' ? ' big' : ''}">${banks[wordTab].map(parseWord).map(({word, pic}) => `<button class="wchip" data-word="${esc(word)}">${pic && lv.stage === 'seed' ? `<span aria-hidden="true">${pic}</span> ` : ''}${esc(word)}${pic && lv.stage !== 'seed' ? ` <span aria-hidden="true">${pic}</span>` : ''}</button>`).join('')}</div>
+      ${lv.checklist ? `<div class="checklist" id="checklist"><span class="dlabel">Super writer</span><span class="ck" data-check="capital">Aa Capital letters</span><span class="ck" data-check="stop">. Full stops</span><span class="ck" data-check="join">🔗 and / because</span></div>` : ''}
+      <div class="drow">${hasGaps ? '<button class="chip" data-wnext>➡ Next ____</button>' : ''}<button class="chip" data-wsay>🔈 Hear my words</button>${lv.noKeyboard ? '<button class="chip" data-wkeys>⌨️ Use the keyboard</button>' : ''}<button class="btn sm go" data-wdone>✔ Done</button></div>`;
+  } else if (drawerKind === 'draw'){
+    h += `<div class="drow"><span class="dlabel">Crayon</span><div class="sws">${['rainbow', ...COLORS].map(c => `<button class="sw${!drawOpts.eraser && c === drawOpts.color ? ' on' : ''}${c === 'rainbow' ? ' sw-auto' : ''}" data-dcolor="${c}" style="background:${c === 'rainbow' ? '#fff' : c}" aria-label="${c === 'rainbow' ? 'Rainbow' : 'Color ' + c}"></button>`).join('')}</div></div>`
+      + `<div class="drow"><span class="dlabel">Size</span>${[['6','Thin'],['14','Medium'],['32','Fat']].map(([v, l]) => `<button class="chip${+v === drawOpts.size ? ' on' : ''}" data-dsize="${v}">${l}</button>`).join('')}
+         <button class="chip${drawOpts.eraser ? ' on' : ''}" data-derase>🧽 Eraser</button>
+         <button class="chip" data-dclear>🗑 Clear drawing</button>
+         <button class="btn sm go" data-dx>✔ Done drawing</button></div>`;
+  }
+  drawer.innerHTML = h;
+}
+let wordTab = null, forceKeyboard = false;
+function wordBanks(){
+  const banks = {};
+  const tp = (project.topic || '').trim();
+  const names = level().banks || ['topic', ...Object.keys(WORD_BANK)];
+  for (const k of names){
+    if (k !== 'topic') { if (WORD_BANK[k]) banks[k] = WORD_BANK[k].split('|'); continue; }
+    if (TOPIC_WORDS[tp]) banks[tp] = TOPIC_WORDS[tp].split('|');
+    else if (tp) banks['My topic'] = [tp.toLowerCase(), ...tp.toLowerCase().split(/\s+/).filter(w => w.length > 2 && w !== tp.toLowerCase())];
+  }
+  return banks;
+}
+// Keep the words being typed focused while tapping the word helper
+['pointerdown', 'mousedown'].forEach(t => drawer.addEventListener(t, e => { if (editingId && e.target.closest('button')) e.preventDefault(); }));
+drawer.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const d = b.dataset;
+  if (d.wtab){ wordTab = d.wtab; renderDrawer(); return; }
+  if (d.word) return insertWord(d.word);
+  if ('wnext' in d){ const dom = editingDom(); if (dom && !selectBlank(dom, true)) toast('No more ____ lines here. Well done!'); return; }
+  if ('wsay' in d){ const dom = editingDom(); if (dom) say(dom.innerText); return; }
+  if ('wsayp' in d){ const m = editingId && findEl(editingId); if (m) say(m.ph); return; }
+  if ('wkeys' in d){ const id = editingId; forceKeyboard = true; const dom = editingDom(); if (dom) dom.blur(); if (id) startEditing(id); return; }
+  if ('wdone' in d){ const dom = editingDom(); if (dom) dom.blur(); else closeDrawer(); return; }
+  if ('dx' in d) return closeDrawer();
+  if (d.stab){ stickerTab = d.stab; renderDrawer(); }
+  else if (d.emo) addSticker(d.emo);
+  else if (d.scolor){ shapeColor = d.scolor; const m = selEl(); if (m && m.type === 'shape'){ m.color = shapeColor; replaceEl(m); commit(); renderInspector(); } renderDrawer(); }
+  else if (d.shape) addShape(d.shape);
+  else if (d.dcolor){ drawOpts.color = d.dcolor; drawOpts.eraser = false; renderDrawer(); }
+  else if (d.dsize){ drawOpts.size = +d.dsize; renderDrawer(); }
+  else if ('derase' in d){ drawOpts.eraser = !drawOpts.eraser; renderDrawer(); }
+  else if ('dclear' in d){ curSlide().drawing = null; commit(); renderStage(); }
+});
+
+/* ---------- drawing ---------- */
+let drawCanvas = null, hue = 0;
+function startDraw(){ select(null); mode = 'draw'; mountDrawLayer(); }
+function mountDrawLayer(){
+  const c = document.createElement('canvas'); c.width = W; c.height = H; c.className = 'draw-layer';
+  const old = slideEl.querySelector('.drawing'); if (old) old.hidden = true;
+  slideEl.appendChild(c); drawCanvas = c;
+  const ctx = c.getContext('2d');
+  if (curSlide().drawing){ const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0); im.src = curSlide().drawing; }
+  c.addEventListener('pointerdown', drawDown);
+}
+function drawPt(e){ const r = drawCanvas.getBoundingClientRect(); return {x:(e.clientX - r.left) * W / r.width, y:(e.clientY - r.top) * H / r.height}; }
+function drawDown(e){
+  e.preventDefault();
+  const c = drawCanvas, ctx = c.getContext('2d');
+  try { c.setPointerCapture(e.pointerId); } catch(_){}
+  ctx.lineCap = ctx.lineJoin = 'round';
+  ctx.globalCompositeOperation = drawOpts.eraser ? 'destination-out' : 'source-over';
+  ctx.lineWidth = drawOpts.eraser ? drawOpts.size * 3 : drawOpts.size;
+  let last = drawPt(e);
+  const seg = q => {
+    ctx.strokeStyle = drawOpts.color === 'rainbow' ? `hsl(${(hue = (hue + 4) % 360)},90%,55%)` : drawOpts.color;
+    ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(q.x, q.y); ctx.stroke(); last = q;
+  };
+  seg({x:last.x + .01, y:last.y});
+  const mv = ev => seg(drawPt(ev));
+  const up = () => {
+    c.removeEventListener('pointermove', mv); c.removeEventListener('pointerup', up); c.removeEventListener('pointercancel', up);
+    curSlide().drawing = c.toDataURL('image/png'); commit();
+  };
+  c.addEventListener('pointermove', mv); c.addEventListener('pointerup', up); c.addEventListener('pointercancel', up);
+}
+function stopDraw(silent){
+  if (mode !== 'draw') return;
+  mode = 'select'; drawCanvas = null;
+  if (drawerKind === 'draw'){ drawerKind = null; drawer.hidden = true; markTools(); }
+  if (!silent) renderStage();
+}
+
+/* ---------- inspector ---------- */
+const chip = (act, val, label, on, extra = '') => `<button class="chip${on ? ' on' : ''}" data-act="${act}" data-val="${esc(val)}" ${extra}>${label}</button>`;
+const sw = (act, val, on, bg, title, cls = '') => `<button class="sw ${cls}${on ? ' on' : ''}" data-act="${act}" data-val="${esc(val)}" style="background:${bg}" title="${esc(title)}" aria-label="${esc(title)}"></button>`;
+const TYPE_LABEL = {text:'✏️ Words', sticker:'😀 Sticker', image:'🖼️ Picture', shape:'⭐ Shape', quiz:'❓ Quiz'};
+function renderInspector(){
+  const m = selEl();
+  insp.innerHTML = m ? elInspector(m) : slideInspector();
+}
+function elInspector(m){
+  let h = `<h3 class="ih">${TYPE_LABEL[m.type]}</h3>`;
+  const simple = level().simple;
+  if (m.type === 'text' && simple){
+    h += `<p class="hint">Tap the words again to write.</p>
+      <div class="row"><button class="btn go" data-act="edit">✏️ Write</button><button class="btn" data-act="say">🔈 Hear it</button></div>
+      <div class="isec"><div class="il">Size</div><div class="row"><button class="btn" data-act="size" data-val="-1">➖ Smaller</button><button class="btn" data-act="size" data-val="1">➕ Bigger</button></div></div>
+      <div class="isec"><div class="il">Colour</div><div class="sws">${sw('color', 'theme', !m.color, '#fff', 'Theme colour', 'sw-auto')}${COLORS.map(c => sw('color', c, m.color === c, c, 'Colour ' + c)).join('')}</div></div>
+      <div class="isec"><div class="il">Look</div><div class="chips">${chip('tstyle', 'none', 'Plain', m.style === 'none')}${chip('tstyle', 'card', 'Card', m.style === 'card')}${chip('tstyle', 'outline', 'Outline', m.style === 'outline')}</div></div>`;
+  } else if (m.type === 'text'){
+    h += `<p class="hint">Tap the words again to type. Drag the pink dot to make them bigger.</p>
+      <div class="isec"><div class="il">Size</div><div class="row"><button class="btn sm" data-act="size" data-val="-1" aria-label="Smaller">A−</button><span class="num">${Math.round(m.size)}</span><button class="btn sm" data-act="size" data-val="1" aria-label="Bigger">A+</button>
+        <button class="btn sm" data-act="edit">⌨️ Type</button></div></div>
+      <div class="isec"><div class="il">Color</div><div class="sws">${sw('color', 'theme', !m.color, '#fff', 'Theme color', 'sw-auto')}${COLORS.map(c => sw('color', c, m.color === c, c, 'Color ' + c)).join('')}</div></div>
+      <div class="isec"><div class="il">Letters</div><div class="chips">${chip('font', 'theme', 'Theme', !m.font)}${FONTS.map(f => chip('font', f, f, m.font === f, `style="font-family:${esc(fontStack(f))}"`)).join('')}</div></div>
+      <div class="isec"><div class="il">Look</div><div class="chips">${chip('tstyle', 'none', 'Plain', m.style === 'none')}${chip('tstyle', 'card', 'Card', m.style === 'card')}${chip('tstyle', 'outline', 'Outline', m.style === 'outline')}${chip('bold', '', '<b>B</b> Bold', m.bold)}</div>
+        <div class="chips">${chip('align', 'left', '⇤ Left', m.align === 'left')}${chip('align', 'center', '↔ Middle', m.align === 'center')}${chip('align', 'right', '⇥ Right', m.align === 'right')}</div></div>`;
+  } else if (m.type === 'sticker'){
+    h += `<div class="isec"><div class="il">Size</div><div class="row"><button class="btn sm" data-act="grow" data-val="-1">➖ Smaller</button><button class="btn sm" data-act="grow" data-val="1">➕ Bigger</button></div></div>`;
+  } else if (m.type === 'image'){
+    h += `<div class="isec"><div class="il">Frame</div><div class="chips">${chip('frame', 'none', 'None', m.frame === 'none')}${chip('frame', 'frame', 'Photo', m.frame === 'frame')}${chip('frame', 'circle', 'Circle', m.frame === 'circle')}</div></div>
+      <div class="isec"><button class="btn sm" data-act="pickimg">📷 ${m.src ? 'Change picture' : 'Choose a picture'}</button></div>
+      ${simple && !m.src ? '<p class="hint">No photo? Delete this box and add a big sticker instead.</p>' : ''}`;
+  } else if (m.type === 'shape'){
+    h += `<div class="isec"><div class="il">Color</div><div class="sws">${COLORS.map(c => sw('color', c, m.color === c, c, 'Color ' + c)).join('')}</div></div>
+      <p class="hint">Tip: put words on top of a shape to make a sign or speech bubble.</p>`;
+  } else if (m.type === 'quiz'){
+    h += `<p class="hint">Tap ✔ next to the right answer. In the show, your audience taps to guess!</p>
+      <div class="isec"><label class="il" for="qQuestion">Question</label><input id="qQuestion" class="inp" data-field="question" value="${esc(m.question)}" maxlength="120"></div>
+      <div class="isec"><div class="il">Answers</div>${m.options.map((o, i) => `<div class="qrow"><button class="qok${i === m.correct ? ' on' : ''}" data-act="qcorrect" data-val="${i}" aria-label="Mark answer ${i + 1} as right">✔</button><input id="qOpt${i}" class="inp" data-field="opt" data-i="${i}" value="${esc(o)}" maxlength="60" aria-label="Answer ${i + 1}">${m.options.length > 2 ? `<button class="btn sm icon" data-act="qdel" data-val="${i}" aria-label="Remove answer ${i + 1}">✖</button>` : ''}</div>`).join('')}
+        ${m.options.length < (level().maxOpts || 4) ? '<button class="btn sm" data-act="qadd">➕ Add answer</button>' : ''}</div>
+      ${simple ? '<button class="btn sm" data-act="say">🔈 Hear it</button>' : `<div class="isec"><div class="il">Size</div><div class="row"><button class="btn sm" data-act="size" data-val="-1">A−</button><span class="num">${Math.round(m.size)}</span><button class="btn sm" data-act="size" data-val="1">A+</button></div></div>`}`;
+  }
+  h += `<div class="isec"><div class="il">Dance in the show</div><div class="chips">${DANCES.map(([v, l]) => chip('anim', v, l, (m.anim || 'none') === v)).join('')}</div></div>`;
+  h += simple
+    ? `<div class="isec"><div class="row">${m.rot ? '<button class="btn sm" data-act="straight">📐 Straighten</button>' : ''}<button class="btn sm" data-act="dup">📄 Copy</button><button class="btn sm danger" data-act="del">🗑 Delete</button></div></div>`
+    : `<div class="isec"><div class="il">Move</div><div class="row"><button class="btn sm" data-act="front">⬆ To front</button><button class="btn sm" data-act="back">⬇ To back</button>${m.rot ? '<button class="btn sm" data-act="straight">📐 Straighten</button>' : ''}</div>
+      <div class="row"><button class="btn sm" data-act="dup">📄 Copy</button><button class="btn sm danger" data-act="del">🗑 Delete</button></div></div>`;
+  return h;
+}
+function slideInspector(){
+  const s = curSlide(), n = project.slides.length;
+  return `<h3 class="ih">Slide ${cur + 1} <span style="color:var(--ink-soft);font-weight:500">of ${n}</span></h3>
+    <p class="hint">Tap anything on the slide to change it, or use the buttons above to add more.</p>
+    <div class="isec"><div class="il">Background</div><div class="sws">${sw('bg', 'theme', !s.bg, '#fff', 'Theme background', 'sq sw-auto')}${BGS.map(b => sw('bg', b, s.bg === b, b, 'Background', 'sq')).join('')}</div></div>
+    <div class="isec"><div class="il">Little pictures around the edge</div><div class="chips">${chip('deco', '1', 'Show', s.deco !== false)}${chip('deco', '0', 'Hide', s.deco === false)}</div></div>
+    <div class="isec"><div class="il">How this slide appears</div><div class="chips">${TRANSITIONS.map(([v, l]) => chip('trans', v, l, (s.transition || 'pop') === v)).join('')}</div></div>
+    ${level().simple ? `<div class="isec"><button class="btn sm" data-act="saySlide">🔈 Hear this slide</button></div>` : `<div class="isec"><label class="il" for="slideNotes">My notes (only I can see)</label><textarea id="slideNotes" class="txta" data-field="notes" placeholder="What will you say on this slide?">${esc(s.notes)}</textarea></div>`}
+    <div class="isec"><div class="il">This slide</div>
+      <div class="row"><button class="btn sm" data-act="sup" ${cur === 0 ? 'disabled' : ''}>⬆ Move up</button><button class="btn sm" data-act="sdown" ${cur === n - 1 ? 'disabled' : ''}>⬇ Move down</button></div>
+      <div class="row"><button class="btn sm" data-act="scopy">📄 Copy slide</button><button class="btn sm danger" data-act="sdel" ${n === 1 ? 'disabled' : ''}>🗑 Delete slide</button></div>
+      <div class="row"><button class="btn sm go" data-act="playhere">▶ Show from here</button></div></div>`;
+}
+insp.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
+  const act = b.dataset.act, val = b.dataset.val, m = selEl(), s = curSlide();
+  const els = s.els;
+  switch (act){
+    case 'size': m.size = clamp(Math.round(m.size * (val === '1' ? 1.15 : 1 / 1.15)), 14, 420); break;
+    case 'grow': { const k = val === '1' ? 1.2 : 1 / 1.2; const nw = clamp(Math.round(m.w * k), 40, 900); m.x -= (nw - m.w) / 2; m.y -= (nw - m.h) / 2; m.w = m.h = nw; break; }
+    case 'edit': startEditing(m.id); return;
+    case 'say': say(m.type === 'quiz' ? `${m.question} ${m.options.join(', or ')}` : m.text); return;
+    case 'saySlide': say(slideText(s)); return;
+    case 'color': m.color = val === 'theme' ? null : val; break;
+    case 'font': m.font = val === 'theme' ? null : val; break;
+    case 'tstyle': m.style = val; break;
+    case 'bold': m.bold = !m.bold; break;
+    case 'align': m.align = val; break;
+    case 'frame': m.frame = val; break;
+    case 'pickimg': pendingImg = m.id; fileInput.click(); return;
+    case 'anim': m.anim = val; break;
+    case 'straight': m.rot = 0; break;
+    case 'front': els.push(els.splice(els.indexOf(m), 1)[0]); break;
+    case 'back': els.unshift(els.splice(els.indexOf(m), 1)[0]); break;
+    case 'dup': return dupSel();
+    case 'del': return deleteSel();
+    case 'qcorrect': m.correct = +val; sfx('ding'); break;
+    case 'qadd': m.options.push('New answer'); break;
+    case 'qdel': m.options.splice(+val, 1); if (m.correct >= m.options.length) m.correct = 0; else if (m.correct > +val) m.correct--; break;
+    case 'bg': s.bg = val === 'theme' ? null : val; break;
+    case 'deco': s.deco = val === '1'; break;
+    case 'trans': s.transition = val; break;
+    case 'sup': case 'sdown': { const to = cur + (act === 'sup' ? -1 : 1); const [x] = project.slides.splice(cur, 1); project.slides.splice(to, 0, x); cur = to; commit(); renderAll(); return; }
+    case 'scopy': { const c = clone(s); c.id = uid(); c.els.forEach(x => x.id = uid()); project.slides.splice(cur + 1, 0, c); cur++; commit(); renderAll(); sfx('pop'); return; }
+    case 'sdel': project.slides.splice(cur, 1); cur = Math.min(cur, project.slides.length - 1); commit(); renderAll(); toast('Slide deleted. Press ↶ to bring it back.'); return;
+    case 'playhere': return startPresent(cur);
+  }
+  commit();
+  if (['front', 'back', 'bg', 'deco'].includes(act)) renderStage(); else if (m) replaceEl(m);
+  renderInspector();
+});
+insp.addEventListener('input', e => {
+  const f = e.target.dataset.field; if (!f) return;
+  const m = selEl();
+  if (f === 'notes') curSlide().notes = e.target.value;
+  else if (f === 'question'){ m.question = e.target.value; replaceEl(m); }
+  else if (f === 'opt'){ m.options[+e.target.dataset.i] = e.target.value; replaceEl(m); }
+});
+insp.addEventListener('change', e => { if (e.target.dataset.field) commit(); });
+
+function dupSel(){
+  const m = selEl(); if (!m) return;
+  const c = clone(m); c.id = uid(); c.x += 40; c.y += 40;
+  addEl(c);
+}
+function deleteSel(){
+  const m = selEl(); if (!m) return;
+  const els = curSlide().els; els.splice(els.indexOf(m), 1);
+  selId = null; editingId = null; commit(); renderStage(); renderInspector(); sfx('boop');
+}
+
+/* ---------- top bar ---------- */
+$('#titleInput').addEventListener('input', e => { project.title = e.target.value; });
+$('#titleInput').addEventListener('change', e => { if (!project.title.trim()) { project.title = 'My Presentation'; e.target.value = project.title; } commit(); saveNow(); });
+$('#btnUndo').onclick = undo;
+$('#btnRedo').onclick = redo;
+$('#btnSound').onclick = () => setSound(!soundOn);
+$('#btnPresent').onclick = () => startPresent(0);
+$('#btnTheme').onclick = openThemePicker;
+$('#btnLevel').onclick = () => openLevelPicker(false);
+$('#btnAddSlide').onclick = openLayoutPicker;
+$('#btnNew').onclick = openWizard;
+function setSound(on){
+  soundOn = on; lsSet('mypresso.sound', on ? 'on' : 'off');
+  $('#btnSound').textContent = on ? '🔊' : '🔇'; $('#pSound').textContent = on ? '🔊' : '🔇';
+  if (on) sfx('ding');
+}
+
+/* ---------- modals ---------- */
+const modal = $('#modal'), modalBody = $('#modalBody');
+function openModal(html, cls = ''){
+  stopEditing();
+  modal.querySelector('.modal').className = 'modal panel ' + cls;
+  modalBody.innerHTML = html; modal.hidden = false; modal.scrollTop = 0;
+}
+function closeModal(){ modal.hidden = true; modalBody.innerHTML = ''; }
+$('#modalX').onclick = closeModal;
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+function themeCardsHTML(active){
+  return Object.entries(THEMES).map(([k, t]) => `<button class="tcard${k === active ? ' on' : ''}" data-theme="${k}" style="background:${t.bg}" aria-label="${esc(t.name)}">
+      <span class="tc-deco" style="left:8%;top:8%">${t.deco[0]}</span><span class="tc-deco" style="right:8%;top:14%">${t.deco[2]}</span>
+      <span class="tc-ico">${t.icon}</span><span class="tc-name">${esc(t.name)}</span></button>`).join('');
+}
+function openThemePicker(){
+  openModal(`<h2>🎨 Pick a look</h2><p class="sub">Every slide changes to match. You can switch any time.</p><div class="theme-grid" id="themeGrid">${themeCardsHTML(project.theme)}</div>`);
+  $('#themeGrid').addEventListener('click', e => {
+    const b = e.target.closest('.tcard'); if (!b) return;
+    project.theme = b.dataset.theme; commit(); renderAll(); closeModal(); sfx('cheer');
+    if (!reduced) confetti(innerWidth / 2, innerHeight / 3, 70);
+  });
+}
+function openLayoutPicker(){
+  openModal(`<h2>➕ Add a slide</h2><p class="sub">Pick the kind of slide you want. You can change everything on it.</p><div class="layout-grid" id="layoutGrid"></div>`);
+  const grid = $('#layoutGrid'), t = theme();
+  (level().layouts || LAYOUTS).forEach(([k, label]) => {
+    const b = document.createElement('button'); b.className = 'lcard'; b.dataset.k = k;
+    const box = document.createElement('div'); box.className = 'lbox';
+    const sd = buildSlide(makeLayout(k, project.theme), t); sd.style.transform = `scale(${200 / W})`;
+    box.appendChild(sd); b.append(box, label); grid.appendChild(b);
+  });
+  grid.addEventListener('click', e => {
+    const b = e.target.closest('.lcard'); if (!b) return;
+    const s = makeLayout(b.dataset.k, project.theme);
+    project.slides.splice(cur + 1, 0, s); cur++; selId = null;
+    commit(); closeModal(); renderAll(); sfx('pop');
+  });
+}
+function levelCardsHTML(active){
+  return Object.entries(LEVELS).map(([k, l]) => `<button class="lvl${k === active ? ' on' : ''}" data-level="${k}" ${l.ready ? '' : 'disabled'}>
+      <span class="lvl-ico" aria-hidden="true">${l.icon}</span><b>${esc(l.name)}</b><span>${esc(l.ages)}</span>${l.ready ? '' : '<em>Coming soon</em>'}</button>`).join('');
+}
+function stageCardsHTML(lvlKey, active){
+  const l = LEVELS[lvlKey];
+  if (!l || !l.stages) return '';
+  return Object.entries(l.stages).map(([k, s], i) => `<button class="stage-card${k === active ? ' on' : ''}" data-stage="${k}">
+      <span class="sc-ico" aria-hidden="true">${s.stageIcon}</span><span class="sc-txt"><b>${i + 1}. ${esc(s.stageName)}</b><span>${esc(s.desc)}</span></span></button>`).join('');
+}
+/* The level a grown-up picked is remembered, so every new show starts at the child's level */
+const prefs = () => ({level: lsGet('mypresso.level') || project.level || 'y1', stage: lsGet('mypresso.stage') || project.stage || ''});
+function openLevelPicker(from){
+  const pf = from ? prefs() : {level: project.level || 'y1', stage: level().stage};
+  const lv = levelOf(pf.level, pf.stage);
+  openModal(`<h2>${lv.icon} Pick a level</h2><p class="sub">For grown-ups. MyPresso changes its slides, words, buttons and the New show steps to suit your child. New shows will start at this level.</p>
+    <div class="lvl-grid" id="lvlGrid">${levelCardsHTML(pf.level)}</div>
+    ${lv.stages ? `<div class="lbl">How does your child read and write right now?</div>
+      <div class="stage-list" id="stageGrid">${stageCardsHTML(pf.level, lv.stage)}</div>
+      ${from ? '' : '<p class="sub" style="margin-top:12px">Changing the stage changes the word helper and any new slides you add. Slides you already made stay the same.</p>'}` : ''}`);
+  const done = (lk, sk) => {
+    lsSet('mypresso.level', lk); if (sk) lsSet('mypresso.stage', sk);
+    sfx('ding');
+    if (from === 'wizard') return openWizard();
+    if (from === 'home'){ closeModal(); renderHome(); return; }
+    project.level = lk; if (sk) project.stage = sk;
+    commit(); renderAll(); closeModal();
+    if (level().stageName) toast(`Now set to ${level().name}: ${level().stageIcon} ${level().stageName}.`);
+  };
+  $('#lvlGrid').addEventListener('click', e => { const b = e.target.closest('.lvl'); if (b && !b.disabled) done(b.dataset.level, null); });
+  $('#stageGrid')?.addEventListener('click', e => { const b = e.target.closest('.stage-card'); if (b) done(pf.level, b.dataset.stage); });
+}
+
+/* First visit: a grown-up sets the year group, reading stage and child's name once */
+function openSetup(){
+  let lk = 'y1', sk = LEVELS.y1.defaultStage;
+  openModal(`<h2>👋 Welcome to MyPresso!</h2>
+    <p class="sub">For grown-ups, before your child starts. MyPresso changes its words, slides and help to suit them. You can change this any time with the level button on the home page.</p>
+    <div class="lbl">Which year is your child in?</div>
+    <div class="lvl-grid" id="suLevels">${levelCardsHTML(lk)}</div>
+    <div class="lbl">How do they read and write right now?</div>
+    <div class="stage-list" id="suStages">${stageCardsHTML(lk, sk)}</div>
+    <label class="lbl" for="suName">Child's first name <span style="font-weight:400;color:var(--ink-soft)">(optional, for the greeting)</span></label>
+    <input id="suName" class="inp" maxlength="30" autocomplete="off" value="${esc(lsGet('mypresso.name') || '')}">
+    <div class="wz-go"><button class="btn go big" id="suGo">Let's go! ➡</button></div>`, 'setup');
+  $('#suLevels').addEventListener('click', e => {
+    const b = e.target.closest('.lvl'); if (!b || b.disabled) return;
+    lk = b.dataset.level; $('#suLevels').querySelectorAll('.lvl').forEach(c => c.classList.toggle('on', c === b));
+  });
+  $('#suStages').addEventListener('click', e => {
+    const b = e.target.closest('.stage-card'); if (!b) return;
+    sk = b.dataset.stage; $('#suStages').querySelectorAll('.stage-card').forEach(c => c.classList.toggle('on', c === b)); sfx('pop');
+  });
+  $('#suGo').onclick = () => {
+    lsSet('mypresso.level', lk); lsSet('mypresso.stage', sk);
+    const name = $('#suName').value.trim(); if (name) lsSet('mypresso.name', name);
+    closeModal(); renderHome(); sfx('cheer');
+    if (!reduced) confetti(innerWidth / 2, innerHeight / 3, 100);
+  };
+}
+
+/* Kid-facing New show: one question per screen, read aloud, big picture buttons. Wording and steps follow the stage. */
+const WZ = {
+  seed:  {topic:'What do you like?', topicSub:'Tap a picture!', other:'Something else', otherHint:'Ask a grown-up to help you type it.',
+          look:'Pick your colours!', lookSub:'Tap the one you like.', name:'What is your name?', nameSub:'', ready:'Ready? Let’s go!', go:'Make my show!', skip:true},
+  sprout:{topic:'What is your show about?', topicSub:'Tap a picture, or make your own.', other:'My own idea', otherHint:'Type your idea here',
+          look:'Pick a look you like!', lookSub:'You can change it later.', name:'Type your name.', nameSub:'It goes on your first slide.', ready:'All ready!', go:'Make my slides!', blank:true},
+  tree:  {topic:'What will your presentation be about?', topicSub:'Type your own topic, or pick an idea.', other:'My own topic', otherHint:'Type your topic here',
+          look:'Choose a theme for your slides.', lookSub:'You can change it later.', name:'Who is the author?', nameSub:'Type your name. Start it with a capital letter!', ready:'Ready to start?', go:'Make my presentation', blank:true, typeFirst:true},
+};
+const WZ_STEPS = ['topic', 'look', 'name', 'ready'];
+function openWizard(){
+  const pf = prefs(), lv = levelOf(pf.level, pf.stage), c = WZ[lv.stage] || WZ.sprout;
+  const w = {step:0, topic:'', icon:'', theme:null, name:lsGet('mypresso.name') || '', own:false};
+  let timer = 0;
+  openModal('<div id="kidWz"></div>', 'kid stage-' + (lv.stage || 'none'));
+  const root = $('#kidWz');
+  const go = n => { clearTimeout(timer); w.step = clamp(n, 0, WZ_STEPS.length - 1); render(true); };
+  function render(speak){
+    const s = WZ_STEPS[w.step], t = THEMES[w.theme] || THEMES.space;
+    const q = c[s], sub = {topic:c.topicSub, look:c.lookSub, name:c.nameSub, ready:''}[s];
+    let body = '';
+    if (s === 'topic'){
+      const typed = `<div class="kid-type"><input id="kTopic" class="inp kid-inp" maxlength="40" placeholder="${esc(c.otherHint)}" value="${esc(w.own ? w.topic : '')}" autocomplete="off" aria-label="${esc(c.other)}"><button class="btn go big" data-k="topicNext">Next ➡</button></div>`;
+      body = (c.typeFirst ? typed : '')
+        + `<div class="kid-grid">${IDEAS.map(([name, th, ic]) => `<button class="kcard${!w.own && w.topic === name ? ' on' : ''}" data-topic="${esc(name)}" data-th="${th}" data-ic="${ic}"><span class="k-ico" aria-hidden="true">${ic}</span><span>${esc(name)}</span></button>`).join('')}
+           ${c.typeFirst ? '' : `<button class="kcard other${w.own ? ' on' : ''}" data-k="own"><span class="k-ico" aria-hidden="true">✏️</span><span>${esc(c.other)}</span></button>`}</div>`
+        + (!c.typeFirst && w.own ? `<p class="sub kid-hint">${esc(c.otherHint)}</p>${typed}` : '');
+    } else if (s === 'look'){
+      body = `<div class="theme-grid kid-themes">${themeCardsHTML(w.theme)}</div><div class="kid-next"><button class="btn go big" data-k="next">Next ➡</button></div>`;
+    } else if (s === 'name'){
+      body = `<div class="kid-type"><input id="kName" class="inp kid-inp" maxlength="30" value="${esc(w.name)}" placeholder="My name" autocomplete="off" aria-label="Your name"><button class="btn go big" data-k="next">Next ➡</button></div>
+        ${c.skip ? '<div class="kid-next"><button class="btn" data-k="skip">Skip</button></div>' : ''}`;
+    } else {
+      const title = w.topic ? `All About ${w.topic}` : 'My Presentation';
+      body = `<div class="kid-preview" style="background:${t.bg}">
+          <span class="k-ico" aria-hidden="true">${w.icon || t.icon}</span>
+          <b style="font-family:${esc(fontStack(t.font))};color:${t.title}">${esc(title)}</b>
+          ${w.name ? `<span style="color:${t.ink}">By ${esc(w.name)}</span>` : ''}</div>
+        <div class="kid-next center"><button class="btn go big kid-go" data-k="go">🪄 ${esc(c.go)}</button>${c.blank ? '<button class="btn big" data-k="blank">📄 Blank page</button>' : ''}</div>`;
+    }
+    root.innerHTML = `<div class="kid-stars" aria-label="Step ${w.step + 1} of ${WZ_STEPS.length}">${WZ_STEPS.map((_, i) => `<span>${i < w.step ? '⭐' : i === w.step ? '🌟' : '☆'}</span>`).join('')}</div>
+      <h2 class="kid-q">${esc(q)} <button class="btn sm icon" data-k="say" aria-label="Hear it again">🔈</button></h2>
+      ${sub ? `<p class="sub kid-sub">${esc(sub)}</p>` : ''}
+      ${body}
+      <div class="kid-foot">${w.step ? '<button class="btn" data-k="back">⬅ Back</button>' : '<span></span>'}
+        <button class="linkbtn" data-k="grown">Grown-ups: ${esc(lv.name)}${lv.stageName ? ` · ${lv.stageIcon} ${esc(lv.stageName)}` : ''}. Change level</button></div>`;
+    if (speak && soundOn) say(q);
+    const inp = root.querySelector('#kTopic, #kName');
+    if (inp && (s === 'name' || w.own || c.typeFirst)) setTimeout(() => inp.focus(), 30);
+  }
+  const readTopic = () => { const v = ($('#kTopic')?.value || '').trim(); return v ? v.charAt(0).toUpperCase() + v.slice(1) : ''; };
+  function create(blank){
+    if ($('#kName')) w.name = $('#kName').value.trim();
+    if (w.name) lsSet('mypresso.name', w.name);
+    const th = w.theme || 'space', lay = (LEVELS[pf.level] || LEVELS.y1).layout || L;
+    let p;
+    if (blank){
+      const title = w.topic ? `All About ${w.topic}` : 'My Presentation';
+      p = {id:uid(), title, theme:th, topic:w.topic, level:pf.level, stage:lv.stage, slides:[lay('title', th, {title, sub: w.name ? `By ${w.name}` : 'By ____', icon:w.icon || undefined, stage:lv.stage})]};
+    } else {
+      p = starterProject(w.topic, w.name, th, pf.level, lv.stage);
+      if (w.icon) p.slides[0].els.forEach(e => { if (e.type === 'sticker') e.emoji = w.icon; });
+    }
+    openProject(p); closeModal(); sfx('cheer');
+    if (!reduced) confetti(innerWidth / 2, innerHeight / 3, 140);
+  }
+  root.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const k = b.dataset.k;
+    if (b.dataset.topic){
+      w.topic = b.dataset.topic; w.icon = b.dataset.ic; w.own = false; w.theme = b.dataset.th;
+      root.querySelectorAll('.kcard').forEach(n => n.classList.toggle('on', n === b));
+      sfx('pop'); say(w.topic); clearTimeout(timer); timer = setTimeout(() => go(1), 900);
+    } else if (b.classList.contains('tcard')){
+      w.theme = b.dataset.theme;
+      root.querySelectorAll('.tcard').forEach(n => n.classList.toggle('on', n === b));
+      sfx('pop'); say(THEMES[w.theme].name); clearTimeout(timer); timer = setTimeout(() => go(2), 900);
+    }
+    else if (k === 'own'){ w.own = true; w.topic = ''; w.icon = ''; render(false); }
+    else if (k === 'topicNext'){
+      const v = readTopic();
+      if (!v){ toast('Type your idea first, or tap a picture.'); return; }
+      w.topic = v; w.own = true; w.icon = ''; if (!w.theme) w.theme = 'space'; go(1);
+    }
+    else if (k === 'next'){ if (WZ_STEPS[w.step] === 'name') w.name = ($('#kName')?.value || '').trim(); if (WZ_STEPS[w.step] === 'look' && !w.theme) w.theme = 'space'; go(w.step + 1); }
+    else if (k === 'skip'){ w.name = ''; go(w.step + 1); }
+    else if (k === 'back') go(w.step - 1);
+    else if (k === 'say') say(c[WZ_STEPS[w.step]]);
+    else if (k === 'go') create(false);
+    else if (k === 'blank') create(true);
+    else if (k === 'grown') openLevelPicker('wizard');
+  });
+  root.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || !/INPUT/.test(e.target.tagName)) return;
+    e.preventDefault(); root.querySelector(e.target.id === 'kTopic' ? '[data-k="topicNext"]' : '[data-k="next"]')?.click();
+  });
+  render(true);
+}
+function openProject(p){
+  stopEditing(); stopDraw(true); closeDrawer();
+  project = p; cur = 0; selId = null; resetHistory(); saveNow(); hideHome(); renderAll();
+}
+/* ---------- home ---------- */
+const homeEl = $('#home'), appEl = $('#app');
+let homeTidy = false;
+const onHome = () => !homeEl.hidden;
+function showHome(){
+  stopEditing(); stopDraw(true); closeDrawer(); closeModal();
+  if (project) saveNow();
+  homeTidy = false;
+  appEl.hidden = true; homeEl.hidden = false;
+  renderHome(); scrollTo(0, 0);
+}
+function hideHome(){ homeEl.hidden = true; appEl.hidden = false; fitStage(); }
+function homeShows(){ return loadIndex().map(m => loadProject(m.id)).filter(p => p && p.slides && p.slides.length); }
+function slideThumb(p, width){
+  const box = document.createElement('div'); box.className = 'hthumb'; box.style.width = width + 'px'; box.style.height = (width * H / W) + 'px';
+  const sd = buildSlide(p.slides[0], THEMES[p.theme] || THEMES.space); sd.style.transform = `scale(${width / W})`;
+  box.appendChild(sd); return box;
+}
+function homeGreeting(){
+  const name = lsGet('mypresso.name');
+  return {hi: name ? `Hi ${name}!` : 'Hi there!', ask: 'What shall we make today?'};
+}
+function renderHome(){
+  const shows = homeShows(), last = shows[0];
+  const pf = prefs(), lv = levelOf(pf.level, pf.stage), g = homeGreeting();
+  $('#homeHi').textContent = g.hi; $('#homeAsk').textContent = g.ask;
+  $('#homeLevel').innerHTML = `${lv.icon} ${esc(lv.name)}${lv.stageIcon ? ' ' + lv.stageIcon : ''} <span>· Grown-ups</span>`;
+  $('#homeSound').textContent = soundOn ? '🔊' : '🔇';
+
+  const cont = $('#homeContinue');
+  cont.hidden = !last; cont.innerHTML = '';
+  if (last){
+    cont.dataset.open = last.id;
+    const info = document.createElement('div'); info.className = 'cont-info';
+    info.innerHTML = `<span class="eyebrow">Keep going</span><b>${esc(last.title)}</b><span class="cont-meta">${last.slides.length} slide${last.slides.length === 1 ? '' : 's'}</span><span class="btn go cont-btn">✏️ Open it</span>`;
+    cont.append(slideThumb(last, 300), info);
+  }
+
+  const grid = $('#homeGrid'); grid.innerHTML = '';
+  $('#homeTidy').textContent = homeTidy ? '✔ Finished tidying' : '🧹 Tidy up';
+  $('#homeTidy').hidden = !shows.length;
+  $('#homeEmpty').hidden = !!shows.length;
+  shows.forEach((p, i) => {
+    const card = document.createElement('div'); card.className = 'show-card'; card.style.setProperty('--tilt', [-1.2, .8, -.5, 1.1][i % 4] + 'deg');
+    const open = document.createElement('button'); open.className = 'show-open'; open.dataset.open = p.id; open.setAttribute('aria-label', 'Open ' + p.title);
+    open.append(slideThumb(p, 232));
+    const t = document.createElement('div'); t.className = 'show-title'; t.textContent = p.title;
+    const acts = document.createElement('div'); acts.className = 'show-acts';
+    acts.innerHTML = homeTidy
+      ? `<button class="btn sm danger" data-del="${p.id}">🗑 Delete</button>`
+      : `<button class="btn sm" data-open="${p.id}">✏️ Open</button><button class="btn sm go" data-play="${p.id}">▶ Show</button>`;
+    card.append(open, t, acts); grid.appendChild(card);
+  });
+}
+homeEl.addEventListener('click', e => {
+  const b = e.target.closest('button, [data-open]'); if (!b) return;
+  const d = b.dataset;
+  if (b.id === 'homeNew') return openWizard();
+  if (b.id === 'homeSay'){ const g = homeGreeting(); say(`${g.hi} ${g.ask}`); return; }
+  if (b.id === 'homeSound'){ setSound(!soundOn); b.textContent = soundOn ? '🔊' : '🔇'; return; }
+  if (b.id === 'homeLevel') return openLevelPicker('home');
+  if (b.id === 'homeTidy'){ homeTidy = !homeTidy; renderHome(); return; }
+  if (d.open || d.play){
+    const p = loadProject(d.open || d.play); if (!p) return;
+    openProject(p); sfx('pop');
+    if (d.play) startPresent(0);
+    return;
+  }
+  if (d.del){ b.outerHTML = `<button class="btn sm danger" data-yes="${d.del}">Really delete?</button>`; return; }
+  if (d.yes){
+    lsDel(PK + d.yes); lsSet(IDX, JSON.stringify(loadIndex().filter(p => p.id !== d.yes)));
+    if (project && project.id === d.yes){
+      const next = homeShows()[0];
+      project = next || emptyProject(); cur = 0; selId = null; resetHistory();
+      renderAll();
+    }
+    sfx('boop'); renderHome();
+  }
+});
+$('#btnHome').onclick = showHome;
+$('#logoHome').onclick = showHome;
+[$('#logoHome'), $('#homeContinue')].forEach(n => n.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); n.click(); } }));
+
+/* ---------- keyboard ---------- */
+document.addEventListener('keydown', e => {
+  if (!$('#present').hidden) return presentKey(e);
+  if (!modal.hidden){ if (e.key === 'Escape') closeModal(); return; }
+  if (onHome()) return;
+  const ae = document.activeElement;
+  if (editingId || /INPUT|TEXTAREA|SELECT/.test(ae?.tagName || '') || ae?.isContentEditable) return;
+  const mod = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
+  if (mod && k === 'z'){ e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+  if (mod && k === 'y'){ e.preventDefault(); redo(); return; }
+  if (e.key === 'Escape'){ if (drawerKind) closeDrawer(); else select(null); return; }
+  const m = selEl();
+  if (!m){
+    if (e.key === 'PageDown') goSlide(cur + 1);
+    if (e.key === 'PageUp') goSlide(cur - 1);
+    return;
+  }
+  if (e.key === 'Delete' || e.key === 'Backspace'){ e.preventDefault(); deleteSel(); }
+  else if (mod && k === 'd'){ e.preventDefault(); dupSel(); }
+  else if (e.key === 'Enter' && m.type === 'text'){ e.preventDefault(); startEditing(m.id); }
+  else if (e.key.startsWith('Arrow')){
+    e.preventDefault(); const st = e.shiftKey ? 40 : 10;
+    if (e.key === 'ArrowLeft') m.x -= st; if (e.key === 'ArrowRight') m.x += st;
+    if (e.key === 'ArrowUp') m.y -= st; if (e.key === 'ArrowDown') m.y += st;
+    replaceEl(m); commit();
+  }
+});
+
+/* ---------- sounds ---------- */
+let actx = null;
+function tone(freq, dur, type = 'sine', when = 0, vol = .18, slideTo){
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    const t0 = actx.currentTime + when, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t0);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
+    g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(.001, t0 + dur);
+    o.connect(g).connect(actx.destination); o.start(t0); o.stop(t0 + dur + .02);
+  } catch(_){}
+}
+function sfx(kind){
+  if (!soundOn) return;
+  if (kind === 'pop') tone(500, .12, 'sine', 0, .16, 900);
+  else if (kind === 'ding'){ tone(880, .25, 'triangle'); tone(1320, .4, 'triangle', .1); }
+  else if (kind === 'boop') tone(260, .22, 'square', 0, .05, 160);
+  else if (kind === 'whoosh') tone(300, .25, 'sawtooth', 0, .03, 1200);
+  else if (kind === 'cheer') [523, 659, 784, 1047].forEach((f, i) => tone(f, .35, 'triangle', i * .09, .14));
+}
+
+/* ---------- confetti ---------- */
+const cv = $('#confetti'), cctx = cv.getContext('2d');
+let parts = [], raf = 0;
+const CONF = ['#FF4FA3', '#FFC83D', '#22C49A', '#5BC0FF', '#6D4AFF', '#FF8A4C'];
+function confetti(x = innerWidth / 2, y = innerHeight / 3, n = 140){
+  if (reduced) n = Math.min(n, 25);
+  if (cv.width !== innerWidth || cv.height !== innerHeight){ cv.width = innerWidth; cv.height = innerHeight; }
+  for (let i = 0; i < n; i++) parts.push({x, y, vx:(Math.random() - .5) * 16, vy:-Math.random() * 15 - 4, r:Math.random() * 6 + 5, c:CONF[i % CONF.length], a:Math.random() * 6, va:(Math.random() - .5) * .35, round:Math.random() < .4});
+  if (!raf) raf = requestAnimationFrame(confLoop);
+}
+function confLoop(){
+  cctx.clearRect(0, 0, cv.width, cv.height);
+  parts.forEach(p => {
+    p.vy += .38; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.a += p.va;
+    cctx.save(); cctx.translate(p.x, p.y); cctx.rotate(p.a); cctx.fillStyle = p.c;
+    if (p.round){ cctx.beginPath(); cctx.arc(0, 0, p.r * .6, 0, 7); cctx.fill(); } else cctx.fillRect(-p.r / 2, -p.r / 4, p.r, p.r / 2);
+    cctx.restore();
+  });
+  parts = parts.filter(p => p.y < cv.height + 40);
+  raf = parts.length ? requestAnimationFrame(confLoop) : 0;
+  if (!raf) cctx.clearRect(0, 0, cv.width, cv.height);
+}
+
+/* ---------- present mode ---------- */
+const presentEl = $('#present'), pArea = $('#pArea'), pNotes = $('#pNotes');
+let pIdx = 0, wandOn = false, notesOn = false, pHolder = null;
+const canSpeak = 'speechSynthesis' in window;
+if (!canSpeak) $('#pRead').hidden = true;
+function startPresent(from){
+  stopEditing(); stopDraw(true); closeDrawer(); closeModal();
+  presentEl.hidden = false; pIdx = clamp(from, 0, project.slides.length - 1);
+  $('#pSound').textContent = soundOn ? '🔊' : '🔇';
+  pArea.innerHTML = ''; showP(0);
+  try { const r = presentEl.requestFullscreen && presentEl.requestFullscreen(); if (r && r.catch) r.catch(() => {}); } catch(_){}
+}
+function exitPresent(){
+  presentEl.hidden = true; pArea.innerHTML = ''; pHolder = null;
+  if (canSpeak) speechSynthesis.cancel();
+  try { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); } catch(_){}
+  renderStage();
+}
+function pScale(){ return Math.min(pArea.clientWidth / W, pArea.clientHeight / H); }
+function showP(dir){
+  const s = project.slides[pIdx], sc = pScale();
+  const holder = document.createElement('div'); holder.className = 'p-holder enter-' + (s.transition || 'pop');
+  holder.style.setProperty('--dir', dir < 0 ? -1 : 1);
+  holder.style.width = W * sc + 'px'; holder.style.height = H * sc + 'px';
+  const sd = buildSlide(s, theme(), {present:true}); sd.style.transform = `scale(${sc})`;
+  holder.appendChild(sd);
+  pArea.querySelectorAll('.p-holder').forEach(o => { o.classList.add('leaving'); setTimeout(() => o.remove(), 420); });
+  pArea.appendChild(holder); pHolder = holder;
+  $('#pCount').textContent = `${pIdx + 1} / ${project.slides.length}`;
+  pNotes.textContent = s.notes || 'No notes on this slide.';
+  pNotes.hidden = !notesOn;
+  if (canSpeak) speechSynthesis.cancel();
+  if (dir) sfx('whoosh');
+  if (pIdx === project.slides.length - 1 && project.slides.length > 1) setTimeout(() => { confetti(); sfx('cheer'); }, 650);
+}
+function pNext(){ if (pIdx < project.slides.length - 1){ pIdx++; showP(1); } else { confetti(); sfx('cheer'); } }
+function pPrev(){ if (pIdx > 0){ pIdx--; showP(-1); } }
+function presentKey(e){
+  if (['ArrowRight', ' ', 'PageDown', 'Enter'].includes(e.key)){ e.preventDefault(); pNext(); }
+  else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)){ e.preventDefault(); pPrev(); }
+  else if (e.key === 'Escape') exitPresent();
+}
+addEventListener('resize', () => {
+  if (presentEl.hidden || !pHolder) return;
+  const sc = pScale(); pHolder.style.width = W * sc + 'px'; pHolder.style.height = H * sc + 'px';
+  pHolder.querySelector('.slide').style.transform = `scale(${sc})`;
+});
+document.addEventListener('fullscreenchange', () => { if (!presentEl.hidden) dispatchEvent(new Event('resize')); });
+pArea.addEventListener('click', e => {
+  const opt = e.target.closest('.q-opt');
+  if (opt){
+    const elDom = opt.closest('.el'); const m = project.slides[pIdx].els.find(x => x.id === elDom.dataset.id);
+    if (+opt.dataset.i === m.correct){ opt.classList.add('right'); const r = opt.getBoundingClientRect(); confetti(r.left + r.width / 2, r.top, 90); sfx('ding'); }
+    else { opt.classList.remove('wrong'); void opt.offsetWidth; opt.classList.add('wrong'); sfx('boop'); }
+    return;
+  }
+  if (e.clientX < innerWidth * .25) pPrev(); else pNext();
+});
+presentEl.querySelector('.p-bar').addEventListener('click', e => {
+  const b = e.target.closest('[data-p]'); if (!b) return;
+  const a = b.dataset.p;
+  if (a === 'next') pNext();
+  else if (a === 'prev') pPrev();
+  else if (a === 'exit') exitPresent();
+  else if (a === 'party'){ confetti(); sfx('cheer'); }
+  else if (a === 'sound') setSound(!soundOn);
+  else if (a === 'wand'){ wandOn = !wandOn; b.classList.toggle('on', wandOn); }
+  else if (a === 'notes'){ notesOn = !notesOn; b.classList.toggle('on', notesOn); pNotes.hidden = !notesOn; }
+  else if (a === 'read') readAloud();
+});
+function slideText(s){
+  return s.els.map(e => e.type === 'text' ? e.text : e.type === 'quiz' ? `${e.question} ${e.options.join(', or ')}?` : '').filter(Boolean).join('. ');
+}
+function readAloud(){ say(slideText(project.slides[pIdx])); }
+let lastSpark = 0;
+presentEl.addEventListener('pointermove', e => {
+  if (!wandOn || reduced) return;
+  const now = performance.now(); if (now - lastSpark < 35) return; lastSpark = now;
+  const sp = document.createElement('span'); sp.className = 'spark';
+  sp.textContent = ['✨', '⭐', '💫', '🌟'][Math.floor(Math.random() * 4)];
+  sp.style.left = e.clientX + 'px'; sp.style.top = e.clientY + 'px';
+  document.body.appendChild(sp); setTimeout(() => sp.remove(), 900);
+});
+
+/* ---------- misc ---------- */
+let toastTimer = 0;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => t.hidden = true, 3200); }
+let tipI = Math.floor(Math.random() * 20);
+const tipList = () => (project && level().simple) ? TIPS_Y1 : TIPS;
+function showTip(){ const l = tipList(); $('#tipText').textContent = l[tipI % l.length]; }
+setInterval(() => { tipI++; showTip(); }, 9000);
+$('#tipSay').onclick = () => say($('#tipText').textContent);
+if (!('speechSynthesis' in window)) $('#tipSay').hidden = true;
+
+/* ---------- boot ---------- */
+(function boot(){
+  const id = lsGet(CUR);
+  let p = id && loadProject(id);
+  // The example show is only made on the very first visit, so it stays gone once deleted
+  if (!p || !p.slides || !p.slides.length) p = lsGet('mypresso.seeded') ? emptyProject() : sampleProject();
+  lsSet('mypresso.seeded', '1');
+  project = p; resetHistory(); saveNow(); renderAll();
+  showHome();
+  if (!lsGet('mypresso.level')) openSetup();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { renderThumbs(); });
+})();
+})();
+</script>
+</body>
+</html>
